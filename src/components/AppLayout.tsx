@@ -1,10 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LayoutDashboard, Tags, User, LogOut, DollarSign } from "lucide-react";
+import { LayoutDashboard, Tags, User, LogOut, DollarSign, CreditCard, History } from "lucide-react";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/installments", label: "Parcelamentos", icon: CreditCard },
+  { to: "/history", label: "Histórico", icon: History },
   { to: "/categories", label: "Categorias", icon: Tags },
   { to: "/profile", label: "Perfil", icon: User },
 ];
