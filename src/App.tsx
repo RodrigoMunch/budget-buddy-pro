@@ -9,6 +9,8 @@ import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import ProfilePage from "./pages/ProfilePage";
+import InstallmentsPage from "./pages/InstallmentsPage";
+import HistoryPage from "./pages/HistoryPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
