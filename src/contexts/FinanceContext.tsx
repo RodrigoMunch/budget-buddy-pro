@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useAuth } from "./AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Category {
   id: string;
+  user_id: string;
   name: string;
   color: string;
   limit: number;
@@ -11,25 +13,28 @@ export interface Category {
 
 export interface Transaction {
   id: string;
+  user_id: string;
   type: "expense" | "income";
   description: string;
   amount: number;
   date: string;
-  categoryId?: string;
-  installments?: number;
-  currentInstallment?: number;
-  parentId?: string;
-  isRecurring?: boolean;
+  category_id?: string | null;
+  installments?: number | null;
+  current_installment?: number | null;
+  parent_id?: string | null;
+  is_recurring?: boolean;
 }
 
 interface FinanceContextType {
   categories: Category[];
   transactions: Transaction[];
-  addCategory: (cat: Omit<Category, "id">) => void;
-  updateCategory: (id: string, cat: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
-  addTransaction: (t: Omit<Transaction, "id">) => void;
-  deleteTransaction: (id: string) => void;
+  loading: boolean;
+  addCategory: (cat: Omit<Category, "id" | "user_id">) => Promise<void>;
+  updateCategory: (id: string, cat: Partial<Category>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
+  addTransaction: (t: Omit<Transaction, "id" | "user_id">) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextType | null>(null);
@@ -41,78 +46,119 @@ export const useFinance = () => {
 };
 
 export const FinanceProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
-  const key = (k: string) => `finapp_${user?.id}_${k}`;
-
+  const { activeUserId, user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      setCategories(JSON.parse(localStorage.getItem(key("categories")) || "[]"));
-      setTransactions(JSON.parse(localStorage.getItem(key("transactions")) || "[]"));
-    } else {
+  const fetchData = useCallback(async () => {
+    if (!activeUserId) {
       setCategories([]);
       setTransactions([]);
+      return;
     }
-  }, [user]);
+    setLoading(true);
+    const [catRes, txRes] = await Promise.all([
+      supabase.from("categories").select("*").eq("user_id", activeUserId),
+      supabase.from("transactions").select("*").eq("user_id", activeUserId),
+    ]);
+    if (catRes.data) setCategories(catRes.data.map((c: any) => ({ ...c, limit: Number(c.limit) })));
+    if (txRes.data) setTransactions(txRes.data.map((t: any) => ({
+      ...t,
+      amount: Number(t.amount),
+      type: t.type as "expense" | "income",
+    })));
+    setLoading(false);
+  }, [activeUserId]);
 
   useEffect(() => {
-    if (user) localStorage.setItem(key("categories"), JSON.stringify(categories));
-  }, [categories, user]);
+    fetchData();
+  }, [fetchData]);
 
-  useEffect(() => {
-    if (user) localStorage.setItem(key("transactions"), JSON.stringify(transactions));
-  }, [transactions, user]);
-
-  const addCategory = (cat: Omit<Category, "id">) => {
-    setCategories((prev) => [...prev, { ...cat, id: crypto.randomUUID() }]);
+  const addCategory = async (cat: Omit<Category, "id" | "user_id">) => {
+    if (!user?.id) return;
+    await supabase.from("categories").insert({
+      user_id: user.id,
+      name: cat.name,
+      color: cat.color,
+      icon: cat.icon,
+      limit: cat.limit,
+    });
+    await fetchData();
   };
 
-  const updateCategory = (id: string, data: Partial<Category>) => {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
+  const updateCategory = async (id: string, data: Partial<Category>) => {
+    await supabase.from("categories").update({
+      name: data.name,
+      color: data.color,
+      icon: data.icon,
+      limit: data.limit,
+    }).eq("id", id);
+    await fetchData();
   };
 
-  const deleteCategory = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+  const deleteCategory = async (id: string) => {
+    await supabase.from("categories").delete().eq("id", id);
+    await fetchData();
   };
 
-  const addTransaction = (t: Omit<Transaction, "id">) => {
+  const addTransaction = async (t: Omit<Transaction, "id" | "user_id">) => {
+    if (!user?.id) return;
     if (t.type === "expense" && t.installments && t.installments > 1) {
       const parentId = crypto.randomUUID();
       const perInstallment = t.amount / t.installments;
       const baseDate = new Date(t.date);
-      const newTransactions: Transaction[] = [];
+      const rows = [];
       for (let i = 0; i < t.installments; i++) {
         const d = new Date(baseDate);
         d.setMonth(d.getMonth() + i);
-        newTransactions.push({
-          ...t,
-          id: crypto.randomUUID(),
+        rows.push({
+          user_id: user.id,
+          type: t.type,
+          description: t.description,
           amount: Math.round(perInstallment * 100) / 100,
           date: d.toISOString().split("T")[0],
-          currentInstallment: i + 1,
-          parentId: i === 0 ? undefined : parentId,
+          category_id: t.category_id || null,
+          installments: t.installments,
+          current_installment: i + 1,
+          parent_id: parentId,
+          is_recurring: false,
         });
       }
-      newTransactions[0].parentId = parentId;
-      setTransactions((prev) => [...prev, ...newTransactions]);
+      await supabase.from("transactions").insert(rows);
     } else {
-      setTransactions((prev) => [...prev, { ...t, id: crypto.randomUUID() }]);
+      await supabase.from("transactions").insert({
+        user_id: user.id,
+        type: t.type,
+        description: t.description,
+        amount: t.amount,
+        date: t.date,
+        category_id: t.category_id || null,
+        installments: t.installments || null,
+        current_installment: t.current_installment || null,
+        parent_id: t.parent_id || null,
+        is_recurring: t.is_recurring || false,
+      });
     }
+    await fetchData();
   };
 
-  const deleteTransaction = (id: string) => {
+  const deleteTransaction = async (id: string) => {
     const t = transactions.find((tr) => tr.id === id);
-    if (t?.parentId) {
-      setTransactions((prev) => prev.filter((tr) => tr.parentId !== t.parentId));
+    if (t?.parent_id) {
+      await supabase.from("transactions").delete().eq("parent_id", t.parent_id);
     } else {
-      setTransactions((prev) => prev.filter((tr) => tr.id !== id));
+      await supabase.from("transactions").delete().eq("id", id);
     }
+    await fetchData();
   };
 
   return (
-    <FinanceContext.Provider value={{ categories, transactions, addCategory, updateCategory, deleteCategory, addTransaction, deleteTransaction }}>
+    <FinanceContext.Provider value={{
+      categories, transactions, loading,
+      addCategory, updateCategory, deleteCategory,
+      addTransaction, deleteTransaction, refresh: fetchData,
+    }}>
       {children}
     </FinanceContext.Provider>
   );

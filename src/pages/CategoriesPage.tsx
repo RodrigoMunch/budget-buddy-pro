@@ -19,35 +19,21 @@ const CategoriesPage = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", color: COLORS[0], limit: "0", icon: ICONS[0] });
 
-  const openNew = () => {
-    setEditId(null);
-    setForm({ name: "", color: COLORS[0], limit: "0", icon: ICONS[0] });
-    setOpen(true);
-  };
+  const openNew = () => { setEditId(null); setForm({ name: "", color: COLORS[0], limit: "0", icon: ICONS[0] }); setOpen(true); };
+  const openEdit = (cat: Category) => { setEditId(cat.id); setForm({ name: cat.name, color: cat.color, limit: cat.limit.toString(), icon: cat.icon }); setOpen(true); };
 
-  const openEdit = (cat: Category) => {
-    setEditId(cat.id);
-    setForm({ name: cat.name, color: cat.color, limit: cat.limit.toString(), icon: cat.icon });
-    setOpen(true);
-  };
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Nome obrigatório"); return; }
     const data = { name: form.name, color: form.color, limit: parseFloat(form.limit) || 0, icon: form.icon };
-    if (editId) {
-      updateCategory(editId, data);
-      toast.success("Categoria atualizada!");
-    } else {
-      addCategory(data);
-      toast.success("Categoria criada!");
-    }
+    if (editId) { await updateCategory(editId, data); toast.success("Categoria atualizada!"); }
+    else { await addCategory(data); toast.success("Categoria criada!"); }
     setOpen(false);
   };
 
   const getCategorySpent = (catId: string) => {
     const now = new Date();
     return transactions
-      .filter((t) => t.type === "expense" && t.categoryId === catId && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
+      .filter((t) => t.type === "expense" && t.category_id === catId && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
       .reduce((sum, t) => sum + t.amount, 0);
   };
 
@@ -61,32 +47,21 @@ const CategoriesPage = () => {
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openNew} className="gradient-primary hover:opacity-90">
-                <Plus className="w-4 h-4 mr-2" /> Nova Categoria
-              </Button>
+              <Button onClick={openNew} className="gradient-primary hover:opacity-90"><Plus className="w-4 h-4 mr-2" /> Nova Categoria</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editId ? "Editar Categoria" : "Nova Categoria"}</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>{editId ? "Editar Categoria" : "Nova Categoria"}</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Alimentação" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Ícone</Label>
+                <div className="space-y-2"><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Alimentação" /></div>
+                <div className="space-y-2"><Label>Ícone</Label>
                   <div className="flex gap-2 flex-wrap">
                     {ICONS.map((icon) => (
                       <button key={icon} type="button" onClick={() => setForm({ ...form, icon })}
-                        className={`w-10 h-10 rounded-lg text-lg flex items-center justify-center border-2 transition-colors ${form.icon === icon ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>
-                        {icon}
-                      </button>
+                        className={`w-10 h-10 rounded-lg text-lg flex items-center justify-center border-2 transition-colors ${form.icon === icon ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>{icon}</button>
                     ))}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Cor</Label>
+                <div className="space-y-2"><Label>Cor</Label>
                   <div className="flex gap-2 flex-wrap">
                     {COLORS.map((c) => (
                       <button key={c} type="button" onClick={() => setForm({ ...form, color: c })}
@@ -95,10 +70,7 @@ const CategoriesPage = () => {
                     ))}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Limite Mensal (R$)</Label>
-                  <Input type="number" value={form.limit} onChange={(e) => setForm({ ...form, limit: e.target.value })} min="0" step="0.01" />
-                </div>
+                <div className="space-y-2"><Label>Limite Mensal (R$)</Label><Input type="number" value={form.limit} onChange={(e) => setForm({ ...form, limit: e.target.value })} min="0" step="0.01" /></div>
                 <Button onClick={handleSave} className="w-full gradient-primary hover:opacity-90">Salvar</Button>
               </div>
             </DialogContent>
@@ -115,34 +87,21 @@ const CategoriesPage = () => {
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: cat.color + "20" }}>
-                          {cat.icon}
-                        </div>
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: cat.color + "20" }}>{cat.icon}</div>
                         <div>
                           <h3 className="font-semibold text-lg">{cat.name}</h3>
-                          {cat.limit > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              R$ {spent.toFixed(2)} / R$ {cat.limit.toFixed(2)}
-                            </p>
-                          )}
+                          {cat.limit > 0 && <p className="text-sm text-muted-foreground">R$ {spent.toFixed(2)} / R$ {cat.limit.toFixed(2)}</p>}
                         </div>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => { deleteCategory(cat.id); toast.success("Categoria removida"); }}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={async () => { await deleteCategory(cat.id); toast.success("Categoria removida"); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                       </div>
                     </div>
                     {cat.limit > 0 && (
                       <div className="mt-4">
                         <div className="w-full h-2 rounded-full bg-secondary">
-                          <div
-                            className="h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${pct}%`, backgroundColor: pct > 90 ? "hsl(var(--destructive))" : cat.color }}
-                          />
+                          <div className="h-2 rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: pct > 90 ? "hsl(var(--destructive))" : cat.color }} />
                         </div>
                       </div>
                     )}
@@ -153,9 +112,7 @@ const CategoriesPage = () => {
           })}
           {categories.length === 0 && (
             <div className="col-span-full text-center py-12 text-muted-foreground">
-              <Tags className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p>Nenhuma categoria criada ainda</p>
-              <p className="text-sm">Clique em "Nova Categoria" para começar</p>
+              <Tags className="w-12 h-12 mx-auto mb-3 opacity-40" /><p>Nenhuma categoria criada ainda</p><p className="text-sm">Clique em "Nova Categoria" para começar</p>
             </div>
           )}
         </div>
