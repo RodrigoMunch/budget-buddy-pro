@@ -16,12 +16,14 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center gradient-dark"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
   return user ? <>{children}</> : <Navigate to="/auth" replace />;
 };
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return null;
   return user ? <Navigate to="/" replace /> : <>{children}</>;
 };
 
@@ -42,13 +44,13 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <FinanceProvider>
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <FinanceProvider>
             <AppRoutes />
-          </BrowserRouter>
-        </FinanceProvider>
-      </AuthProvider>
+          </FinanceProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

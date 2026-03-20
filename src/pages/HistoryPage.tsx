@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import { History, CalendarIcon, Filter, Trash2, X } from "lucide-react";
-import { format, subDays, isAfter, isBefore, startOfDay, endOfDay, isEqual } from "date-fns";
+import { format, subDays, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
@@ -51,195 +51,100 @@ const HistoryPage = () => {
         const d = new Date(t.date);
         if (from && isBefore(d, startOfDay(from))) return false;
         if (to && isAfter(d, endOfDay(to))) return false;
-        if (categoryFilter !== "all" && t.categoryId !== categoryFilter) return false;
+        if (categoryFilter !== "all" && t.category_id !== categoryFilter) return false;
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [transactions, activePreset, dateRange, categoryFilter]);
 
   const totalFiltered = filteredTransactions.reduce((s, t) => s + t.amount, 0);
+  const getCategoryName = (id?: string | null) => categories.find((c) => c.id === id)?.name || "Sem categoria";
+  const getCategoryIcon = (id?: string | null) => categories.find((c) => c.id === id)?.icon || "💰";
+  const getCategoryColor = (id?: string | null) => categories.find((c) => c.id === id)?.color || "#6c5ce7";
 
-  const getCategoryName = (id?: string) => categories.find((c) => c.id === id)?.name || "Sem categoria";
-  const getCategoryIcon = (id?: string) => categories.find((c) => c.id === id)?.icon || "💰";
-  const getCategoryColor = (id?: string) => categories.find((c) => c.id === id)?.color || "#6c5ce7";
-
-  const handlePreset = (key: PresetKey) => {
-    setActivePreset(key);
-    if (key !== "custom") setDateRange(undefined);
-  };
+  const handlePreset = (key: PresetKey) => { setActivePreset(key); if (key !== "custom") setDateRange(undefined); };
 
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-              <History className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Histórico de Despesas</h1>
-              <p className="text-muted-foreground text-sm">Filtre e analise suas despesas</p>
-            </div>
+            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><History className="w-5 h-5 text-primary-foreground" /></div>
+            <div><h1 className="text-3xl font-bold">Histórico de Despesas</h1><p className="text-muted-foreground text-sm">Filtre e analise suas despesas</p></div>
           </div>
         </motion.div>
 
-        {/* Filters */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card>
             <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground">Filtros</span>
-              </div>
-
-              {/* Preset buttons */}
+              <div className="flex items-center gap-2 mb-2"><Filter className="w-4 h-4 text-muted-foreground" /><span className="text-sm font-medium text-muted-foreground">Filtros</span></div>
               <div className="flex flex-wrap gap-2">
                 {presets.map((p) => (
-                  <Button
-                    key={p.key}
-                    size="sm"
-                    variant={activePreset === p.key ? "default" : "outline"}
+                  <Button key={p.key} size="sm" variant={activePreset === p.key ? "default" : "outline"}
                     className={activePreset === p.key ? "gradient-primary text-primary-foreground" : ""}
-                    onClick={() => handlePreset(p.key)}
-                  >
-                    {p.label}
-                  </Button>
+                    onClick={() => handlePreset(p.key)}>{p.label}</Button>
                 ))}
               </div>
-
-              {/* Custom date range picker */}
               {activePreset === "custom" && (
                 <div className="flex items-center gap-2">
                   <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="justify-start min-w-[260px]">
                         <CalendarIcon className="w-4 h-4 mr-2" />
-                        {dateRange?.from ? (
-                          dateRange.to ? (
-                            <>
-                              {format(dateRange.from, "dd/MM/yyyy")} — {format(dateRange.to, "dd/MM/yyyy")}
-                            </>
-                          ) : (
-                            format(dateRange.from, "dd/MM/yyyy")
-                          )
-                        ) : (
-                          <span className="text-muted-foreground">Selecione o período</span>
-                        )}
+                        {dateRange?.from ? (dateRange.to ? <>{format(dateRange.from, "dd/MM/yyyy")} — {format(dateRange.to, "dd/MM/yyyy")}</> : format(dateRange.from, "dd/MM/yyyy")) : <span className="text-muted-foreground">Selecione o período</span>}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="range"
-                        selected={dateRange}
-                        onSelect={setDateRange}
-                        numberOfMonths={2}
-                        locale={ptBR}
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
+                    <PopoverContent className="w-auto p-0" align="start"><Calendar mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} locale={ptBR} className="p-3 pointer-events-auto" /></PopoverContent>
                   </Popover>
-                  {dateRange && (
-                    <Button variant="ghost" size="icon" onClick={() => setDateRange(undefined)}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+                  {dateRange && <Button variant="ghost" size="icon" onClick={() => setDateRange(undefined)}><X className="w-4 h-4" /></Button>}
                 </div>
               )}
-
-              {/* Category filter */}
               <div className="flex items-center gap-3">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-[220px]">
-                    <SelectValue placeholder="Todas as categorias" />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-[220px]"><SelectValue placeholder="Todas as categorias" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.icon} {c.name}</SelectItem>
-                    ))}
+                    {categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.icon} {c.name}</SelectItem>))}
                   </SelectContent>
                 </Select>
-                {categoryFilter !== "all" && (
-                  <Button variant="ghost" size="sm" onClick={() => setCategoryFilter("all")}>
-                    <X className="w-3 h-3 mr-1" /> Limpar
-                  </Button>
-                )}
+                {categoryFilter !== "all" && <Button variant="ghost" size="sm" onClick={() => setCategoryFilter("all")}><X className="w-3 h-3 mr-1" /> Limpar</Button>}
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Results summary */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardContent className="p-5">
-              <p className="text-sm text-muted-foreground mb-1">Despesas encontradas</p>
-              <p className="text-2xl font-bold">{filteredTransactions.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-5">
-              <p className="text-sm text-muted-foreground mb-1">Total no período</p>
-              <p className="text-2xl font-bold text-destructive">R$ {totalFiltered.toFixed(2)}</p>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Despesas encontradas</p><p className="text-2xl font-bold">{filteredTransactions.length}</p></CardContent></Card>
+          <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Total no período</p><p className="text-2xl font-bold text-destructive">R$ {totalFiltered.toFixed(2)}</p></CardContent></Card>
         </motion.div>
 
-        {/* Transaction list */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Despesas</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-lg">Despesas</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {filteredTransactions.map((t) => (
                   <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-                        style={{ backgroundColor: getCategoryColor(t.categoryId) + "22" }}
-                      >
-                        {getCategoryIcon(t.categoryId)}
-                      </div>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg" style={{ backgroundColor: getCategoryColor(t.category_id) + "22" }}>{getCategoryIcon(t.category_id)}</div>
                       <div>
                         <p className="font-medium text-sm">{t.description}</p>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(t.date), "dd/MM/yyyy")}
-                          </span>
-                          {t.currentInstallment && (
-                            <Badge variant="outline" className="text-xs py-0 h-5">
-                              {t.currentInstallment}/{t.installments}x
-                            </Badge>
-                          )}
-                          <Badge variant="secondary" className="text-xs py-0 h-5">
-                            {getCategoryName(t.categoryId)}
-                          </Badge>
+                          <span className="text-xs text-muted-foreground">{format(new Date(t.date), "dd/MM/yyyy")}</span>
+                          {t.current_installment && <Badge variant="outline" className="text-xs py-0 h-5">{t.current_installment}/{t.installments}x</Badge>}
+                          <Badge variant="secondary" className="text-xs py-0 h-5">{getCategoryName(t.category_id)}</Badge>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-destructive">
-                        - R$ {t.amount.toFixed(2)}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="opacity-0 group-hover:opacity-100 h-8 w-8"
-                        onClick={() => { deleteTransaction(t.id); toast.success("Despesa removida"); }}
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                      </Button>
+                      <span className="font-semibold text-destructive">- R$ {t.amount.toFixed(2)}</span>
+                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8"
+                        onClick={async () => { await deleteTransaction(t.id); toast.success("Despesa removida"); }}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
                     </div>
                   </div>
                 ))}
                 {filteredTransactions.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <History className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                    <p>Nenhuma despesa encontrada</p>
-                    <p className="text-sm text-muted-foreground/60 mt-1">Ajuste os filtros ou registre novas despesas</p>
-                  </div>
+                  <div className="text-center py-12 text-muted-foreground"><History className="w-10 h-10 mx-auto mb-2 opacity-40" /><p>Nenhuma despesa encontrada</p><p className="text-sm text-muted-foreground/60 mt-1">Ajuste os filtros ou registre novas despesas</p></div>
                 )}
               </div>
             </CardContent>

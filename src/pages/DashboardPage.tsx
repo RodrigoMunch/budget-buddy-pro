@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const DashboardPage = () => {
-  const { user } = useAuth();
+  const { activeProfile } = useAuth();
   const { categories, transactions, addTransaction, deleteTransaction } = useFinance();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"expense" | "income">("expense");
@@ -39,35 +39,30 @@ const DashboardPage = () => {
   const totalIncome = monthTransactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const totalExpense = monthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
   const balance = totalIncome - totalExpense;
-  const limitPct = user?.totalLimit ? Math.min((totalExpense / user.totalLimit) * 100, 100) : 0;
+  const totalLimit = activeProfile?.total_limit || 0;
+  const limitPct = totalLimit ? Math.min((totalExpense / totalLimit) * 100, 100) : 0;
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!description.trim() || !amount) { toast.error("Preencha todos os campos"); return; }
-    addTransaction({
+    await addTransaction({
       type,
       description,
       amount: parseFloat(amount),
       date: format(date, "yyyy-MM-dd"),
-      categoryId: type === "expense" ? categoryId || undefined : undefined,
-      installments: type === "expense" ? parseInt(installments) : undefined,
-      isRecurring: type === "income" ? isRecurring : undefined,
+      category_id: type === "expense" ? categoryId || null : null,
+      installments: type === "expense" ? parseInt(installments) : null,
+      is_recurring: type === "income" ? isRecurring : false,
     });
     toast.success(type === "expense" ? "Despesa registrada!" : "Entrada registrada!");
     setOpen(false);
-    setDescription("");
-    setAmount("");
-    setCategoryId("");
-    setInstallments("1");
-    setIsRecurring(false);
-    setDate(new Date());
+    setDescription(""); setAmount(""); setCategoryId(""); setInstallments("1"); setIsRecurring(false); setDate(new Date());
   };
 
-  const getCategoryName = (id?: string) => {
+  const getCategoryName = (id?: string | null) => {
     if (!id) return "Sem categoria";
     return categories.find((c) => c.id === id)?.name || "—";
   };
-
-  const getCategoryIcon = (id?: string) => {
+  const getCategoryIcon = (id?: string | null) => {
     if (!id) return "💰";
     return categories.find((c) => c.id === id)?.icon || "💰";
   };
@@ -78,49 +73,35 @@ const DashboardPage = () => {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              {format(now, "MMMM 'de' yyyy", { locale: ptBR })}
-            </p>
+            <p className="text-muted-foreground mt-1">{format(now, "MMMM 'de' yyyy", { locale: ptBR })}</p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="gradient-primary hover:opacity-90">
-                <Plus className="w-4 h-4 mr-2" /> Nova Transação
-              </Button>
+              <Button className="gradient-primary hover:opacity-90"><Plus className="w-4 h-4 mr-2" /> Nova Transação</Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Nova Transação</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>Nova Transação</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Button variant={type === "expense" ? "default" : "outline"} onClick={() => setType("expense")}
-                    className={type === "expense" ? "gradient-primary flex-1" : "flex-1"}>
-                    Despesa
-                  </Button>
+                    className={type === "expense" ? "gradient-primary flex-1" : "flex-1"}>Despesa</Button>
                   <Button variant={type === "income" ? "default" : "outline"} onClick={() => setType("income")}
-                    className={type === "income" ? "bg-success hover:bg-success/90 flex-1" : "flex-1"}>
-                    Entrada
-                  </Button>
+                    className={type === "income" ? "bg-success hover:bg-success/90 flex-1" : "flex-1"}>Entrada</Button>
                 </div>
-
                 <div className="space-y-2">
                   <Label>Descrição</Label>
                   <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Supermercado" />
                 </div>
-
                 <div className="space-y-2">
                   <Label>Valor (R$)</Label>
                   <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min="0.01" step="0.01" placeholder="0,00" />
                 </div>
-
                 <div className="space-y-2">
                   <Label>Data</Label>
                   <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
-                        <CalendarIcon className="w-4 h-4 mr-2" />
-                        {format(date, "dd/MM/yyyy")}
+                        <CalendarIcon className="w-4 h-4 mr-2" />{format(date, "dd/MM/yyyy")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -128,7 +109,6 @@ const DashboardPage = () => {
                     </PopoverContent>
                   </Popover>
                 </div>
-
                 {type === "expense" && (
                   <>
                     <div className="space-y-2">
@@ -136,9 +116,7 @@ const DashboardPage = () => {
                       <Select value={categoryId} onValueChange={setCategoryId}>
                         <SelectTrigger><SelectValue placeholder="Selecionar categoria" /></SelectTrigger>
                         <SelectContent>
-                          {categories.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{c.icon} {c.name}</SelectItem>
-                          ))}
+                          {categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.icon} {c.name}</SelectItem>))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -146,24 +124,17 @@ const DashboardPage = () => {
                       <Label>Parcelas</Label>
                       <Input type="number" value={installments} onChange={(e) => setInstallments(e.target.value)} min="1" max="48" />
                       {parseInt(installments) > 1 && amount && (
-                        <p className="text-sm text-muted-foreground">
-                          {installments}x de R$ {(parseFloat(amount) / parseInt(installments)).toFixed(2)}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{installments}x de R$ {(parseFloat(amount) / parseInt(installments)).toFixed(2)}</p>
                       )}
                     </div>
                   </>
                 )}
-
                 {type === "income" && (
                   <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <Label>Entrada Recorrente</Label>
-                      <p className="text-sm text-muted-foreground">Repetir mensalmente</p>
-                    </div>
+                    <div><Label>Entrada Recorrente</Label><p className="text-sm text-muted-foreground">Repetir mensalmente</p></div>
                     <Switch checked={isRecurring} onCheckedChange={setIsRecurring} />
                   </div>
                 )}
-
                 <Button onClick={handleAdd} className={`w-full ${type === "expense" ? "gradient-primary" : "bg-success hover:bg-success/90"}`}>
                   Registrar {type === "expense" ? "Despesa" : "Entrada"}
                 </Button>
@@ -172,13 +143,12 @@ const DashboardPage = () => {
           </Dialog>
         </motion.div>
 
-        {/* Summary cards */}
         <div className="grid gap-4 md:grid-cols-4">
           {[
             { label: "Saldo", value: balance, icon: Wallet, gradient: "gradient-card", textClass: "text-primary-foreground", subClass: "text-primary-foreground/70" },
             { label: "Entradas", value: totalIncome, icon: TrendingUp, color: "success" },
             { label: "Despesas", value: totalExpense, icon: TrendingDown, color: "destructive" },
-            { label: "Limite", value: user?.totalLimit || 0, icon: Target, pct: limitPct },
+            { label: "Limite", value: totalLimit, icon: Target, pct: limitPct },
           ].map((item, i) => (
             <motion.div key={item.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
               <Card className={item.gradient || ""}>
@@ -187,9 +157,7 @@ const DashboardPage = () => {
                     <span className={`text-sm font-medium ${item.subClass || "text-muted-foreground"}`}>{item.label}</span>
                     <item.icon className={`w-5 h-5 ${item.textClass || (item.color ? `text-${item.color}` : "text-primary")}`} />
                   </div>
-                  <p className={`text-2xl font-bold ${item.textClass || ""}`}>
-                    R$ {item.value.toFixed(2)}
-                  </p>
+                  <p className={`text-2xl font-bold ${item.textClass || ""}`}>R$ {item.value.toFixed(2)}</p>
                   {item.pct !== undefined && item.value > 0 && (
                     <div className="mt-2">
                       <div className="w-full h-1.5 rounded-full bg-secondary">
@@ -204,12 +172,9 @@ const DashboardPage = () => {
           ))}
         </div>
 
-        {/* Recent transactions */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card>
-            <CardHeader>
-              <CardTitle>Transações Recentes</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Transações Recentes</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {monthTransactions
@@ -219,15 +184,15 @@ const DashboardPage = () => {
                     <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-card flex items-center justify-center text-lg">
-                          {t.type === "income" ? "💵" : getCategoryIcon(t.categoryId)}
+                          {t.type === "income" ? "💵" : getCategoryIcon(t.category_id)}
                         </div>
                         <div>
                           <p className="font-medium text-sm">{t.description}</p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(t.date), "dd/MM/yyyy")}
-                            {t.currentInstallment && ` • ${t.currentInstallment}/${t.installments}x`}
-                            {t.isRecurring && " • Recorrente"}
-                            {t.type === "expense" && ` • ${getCategoryName(t.categoryId)}`}
+                            {t.current_installment && ` • ${t.current_installment}/${t.installments}x`}
+                            {t.is_recurring && " • Recorrente"}
+                            {t.type === "expense" && ` • ${getCategoryName(t.category_id)}`}
                           </p>
                         </div>
                       </div>
@@ -236,7 +201,7 @@ const DashboardPage = () => {
                           {t.type === "income" ? "+" : "-"} R$ {t.amount.toFixed(2)}
                         </span>
                         <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8"
-                          onClick={() => { deleteTransaction(t.id); toast.success("Transação removida"); }}>
+                          onClick={async () => { await deleteTransaction(t.id); toast.success("Transação removida"); }}>
                           <Trash2 className="w-3.5 h-3.5 text-destructive" />
                         </Button>
                       </div>
