@@ -28,7 +28,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       {/* Desktop sidebar */}
-      <aside className={`w-64 gradient-dark text-primary-foreground flex-col fixed h-full z-20 hidden md:flex ${impersonating ? "mt-8" : ""}`}>
+      <aside className={`w-64 gradient-dark text-primary-foreground flex-col fixed h-full z-20 hidden lg:flex ${impersonating ? "mt-8" : ""}`}>
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><DollarSign className="w-5 h-5" /></div>
           <span className="text-xl font-bold">FinControl</span>
@@ -59,7 +59,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Mobile header bar */}
-      <div className={`md:hidden fixed top-0 left-0 right-0 z-30 gradient-dark ${impersonating ? "mt-8" : ""}`}>
+      <div className={`lg:hidden fixed top-0 left-0 right-0 z-30 gradient-dark ${impersonating ? "mt-8" : ""}`}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center"><DollarSign className="w-4 h-4 text-primary-foreground" /></div>
@@ -73,11 +73,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-20 bg-black/50" onClick={() => setMobileOpen(false)} />
+        <div className="lg:hidden fixed inset-0 z-20 bg-black/50" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* Mobile slide-out menu */}
-      <div className={`md:hidden fixed top-0 left-0 h-full w-64 z-40 gradient-dark text-primary-foreground transform transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${impersonating ? "pt-8" : ""}`}>
+      <div className={`lg:hidden fixed top-0 left-0 h-full w-64 z-40 gradient-dark text-primary-foreground transform transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${impersonating ? "pt-8" : ""}`}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><DollarSign className="w-5 h-5" /></div>
@@ -108,7 +108,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
-      <main className={`flex-1 md:ml-64 p-4 md:p-6 pt-16 md:pt-6 ${impersonating ? "mt-8" : ""}`}>{children}</main>
+      <main className={`flex-1 lg:ml-64 p-4 lg:p-6 pt-16 lg:pt-6 ${impersonating ? "mt-8" : ""}`}>{children}</main>
     </div>
   );
 };
