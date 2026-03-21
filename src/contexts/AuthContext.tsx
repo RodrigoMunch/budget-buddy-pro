@@ -18,7 +18,7 @@ interface AuthContextType {
   impersonating: Profile | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ error?: string }>;
-  loginWithGoogle: () => Promise<void>;
+  
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
   impersonateUser: (email: string) => Promise<{ error?: string }>;
