@@ -143,7 +143,7 @@ const DashboardPage = () => {
           </Dialog>
         </motion.div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { label: "Saldo", value: balance, icon: Wallet, gradient: "gradient-card", textClass: "text-primary-foreground", subClass: "text-primary-foreground/70" },
             { label: "Entradas", value: totalIncome, icon: TrendingUp, color: "success" },
