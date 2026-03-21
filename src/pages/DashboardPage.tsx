@@ -157,7 +157,7 @@ const DashboardPage = () => {
                     <span className={`text-sm font-medium ${item.subClass || "text-muted-foreground"}`}>{item.label}</span>
                     <item.icon className={`w-5 h-5 ${item.textClass || (item.color ? `text-${item.color}` : "text-primary")}`} />
                   </div>
-                  <p className={`text-2xl font-bold ${item.textClass || ""}`}>R$ {item.value.toFixed(2)}</p>
+                  <p className={`text-xl sm:text-2xl font-bold ${item.textClass || ""}`}>R$ {item.value.toFixed(2)}</p>
                   {item.pct !== undefined && item.value > 0 && (
                     <div className="mt-2">
                       <div className="w-full h-1.5 rounded-full bg-secondary">
