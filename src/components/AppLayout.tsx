@@ -73,7 +73,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-20 bg-black/50" onClick={() => setMobileOpen(false)} />
+        <div className="lg:hidden fixed inset-0 z-20 bg-black/50" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* Mobile slide-out menu */}
