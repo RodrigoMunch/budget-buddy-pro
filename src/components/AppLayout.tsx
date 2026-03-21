@@ -77,7 +77,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       {/* Mobile slide-out menu */}
-      <div className={`md:hidden fixed top-0 left-0 h-full w-64 z-40 gradient-dark text-primary-foreground transform transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${impersonating ? "pt-8" : ""}`}>
+      <div className={`lg:hidden fixed top-0 left-0 h-full w-64 z-40 gradient-dark text-primary-foreground transform transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${impersonating ? "pt-8" : ""}`}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><DollarSign className="w-5 h-5" /></div>
