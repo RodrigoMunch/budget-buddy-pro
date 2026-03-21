@@ -181,7 +181,7 @@ const DashboardPage = () => {
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                   .slice(0, 20)
                   .map((t) => (
-                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group">
+                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group gap-2">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-card flex items-center justify-center text-lg">
                           {t.type === "income" ? "💵" : getCategoryIcon(t.category_id)}
