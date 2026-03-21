@@ -59,7 +59,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Mobile header bar */}
-      <div className={`md:hidden fixed top-0 left-0 right-0 z-30 gradient-dark ${impersonating ? "mt-8" : ""}`}>
+      <div className={`lg:hidden fixed top-0 left-0 right-0 z-30 gradient-dark ${impersonating ? "mt-8" : ""}`}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center"><DollarSign className="w-4 h-4 text-primary-foreground" /></div>
