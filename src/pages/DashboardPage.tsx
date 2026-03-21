@@ -70,7 +70,7 @@ const DashboardPage = () => {
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto space-y-6">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground mt-1">{format(now, "MMMM 'de' yyyy", { locale: ptBR })}</p>
@@ -143,7 +143,7 @@ const DashboardPage = () => {
           </Dialog>
         </motion.div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { label: "Saldo", value: balance, icon: Wallet, gradient: "gradient-card", textClass: "text-primary-foreground", subClass: "text-primary-foreground/70" },
             { label: "Entradas", value: totalIncome, icon: TrendingUp, color: "success" },
@@ -181,7 +181,7 @@ const DashboardPage = () => {
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                   .slice(0, 20)
                   .map((t) => (
-                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group">
+                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group gap-2">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-card flex items-center justify-center text-lg">
                           {t.type === "income" ? "💵" : getCategoryIcon(t.category_id)}
@@ -196,8 +196,8 @@ const DashboardPage = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`font-semibold ${t.type === "income" ? "text-success" : "text-destructive"}`}>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`font-semibold text-sm whitespace-nowrap ${t.type === "income" ? "text-success" : "text-destructive"}`}>
                           {t.type === "income" ? "+" : "-"} R$ {t.amount.toFixed(2)}
                         </span>
                         <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8"

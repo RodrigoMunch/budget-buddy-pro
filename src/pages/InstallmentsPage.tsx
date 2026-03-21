@@ -65,7 +65,7 @@ const InstallmentsPage = () => {
           </motion.div>
         ) : (
           <>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid gap-4 md:grid-cols-3">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid gap-4 grid-cols-1 sm:grid-cols-3">
               <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Parcelamentos Ativos</p><p className="text-2xl font-bold">{groupEntries.length}</p></CardContent></Card>
               <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Total Este Mês</p><p className="text-2xl font-bold text-destructive">R$ {monthlyTotals[0]?.toFixed(2) || "0.00"}</p></CardContent></Card>
               <Card><CardContent className="p-5"><div className="flex items-center gap-2 mb-1"><CalendarRange className="w-4 h-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">Projeção até</p></div><p className="text-2xl font-bold capitalize">{format(maxDate, "MMM/yyyy", { locale: ptBR })}</p></CardContent></Card>

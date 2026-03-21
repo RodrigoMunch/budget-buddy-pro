@@ -18,7 +18,7 @@ interface AuthContextType {
   impersonating: Profile | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ error?: string }>;
-  loginWithGoogle: () => Promise<void>;
+  
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
   impersonateUser: (email: string) => Promise<{ error?: string }>;
@@ -115,12 +115,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return {};
   };
 
-  const loginWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
-  };
 
   const logout = async () => {
     setImpersonating(null);
@@ -158,7 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user, session, profile, isAdmin, loading,
         impersonating, activeProfile, activeUserId,
-        login, register, loginWithGoogle, logout,
+        login, register, logout,
         updateProfile, impersonateUser, stopImpersonating,
       }}
     >
