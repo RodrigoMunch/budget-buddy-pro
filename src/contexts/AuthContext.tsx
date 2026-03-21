@@ -152,7 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user, session, profile, isAdmin, loading,
         impersonating, activeProfile, activeUserId,
-        login, register, loginWithGoogle, logout,
+        login, register, logout,
         updateProfile, impersonateUser, stopImpersonating,
       }}
     >
