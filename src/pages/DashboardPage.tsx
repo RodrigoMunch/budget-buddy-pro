@@ -197,7 +197,7 @@ const DashboardPage = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className={`font-semibold ${t.type === "income" ? "text-success" : "text-destructive"}`}>
+                        <span className={`font-semibold text-sm whitespace-nowrap ${t.type === "income" ? "text-success" : "text-destructive"}`}>
                           {t.type === "income" ? "+" : "-"} R$ {t.amount.toFixed(2)}
                         </span>
                         <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8"
