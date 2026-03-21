@@ -115,12 +115,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return {};
   };
 
-  const loginWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
-  };
 
   const logout = async () => {
     setImpersonating(null);
