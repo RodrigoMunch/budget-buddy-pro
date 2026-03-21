@@ -77,11 +77,6 @@ const AuthPage = () => {
               </Button>
             </form>
 
-            <div className="my-4 flex items-center gap-3">
-              <Separator className="flex-1" />
-              <span className="text-xs text-muted-foreground">ou</span>
-              <Separator className="flex-1" />
-            </div>
 
 
             <div className="mt-4 text-center">
