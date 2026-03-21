@@ -28,7 +28,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       {/* Desktop sidebar */}
-      <aside className={`w-64 gradient-dark text-primary-foreground flex-col fixed h-full z-20 hidden md:flex ${impersonating ? "mt-8" : ""}`}>
+      <aside className={`w-64 gradient-dark text-primary-foreground flex-col fixed h-full z-20 hidden lg:flex ${impersonating ? "mt-8" : ""}`}>
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><DollarSign className="w-5 h-5" /></div>
           <span className="text-xl font-bold">FinControl</span>
