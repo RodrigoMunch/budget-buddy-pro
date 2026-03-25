@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useFinance } from "@/contexts/FinanceContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +14,20 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import { Plus, TrendingUp, TrendingDown, Wallet, Target, Trash2, CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
+
+const CHART_COLORS = [
+  "hsl(242, 65%, 60%)",
+  "hsl(145, 63%, 42%)",
+  "hsl(0, 72%, 55%)",
+  "hsl(38, 92%, 50%)",
+  "hsl(200, 70%, 50%)",
+  "hsl(280, 60%, 55%)",
+  "hsl(170, 55%, 45%)",
+  "hsl(20, 80%, 55%)",
+];
 
 const DashboardPage = () => {
   const { activeProfile } = useAuth();
@@ -42,6 +54,38 @@ const DashboardPage = () => {
   const totalLimit = activeProfile?.total_limit || 0;
   const limitPct = totalLimit ? Math.min((totalExpense / totalLimit) * 100, 100) : 0;
 
+  // Chart data: expenses by category (current month)
+  const pieData = useMemo(() => {
+    const map = new Map<string, number>();
+    monthTransactions
+      .filter((t) => t.type === "expense")
+      .forEach((t) => {
+        const catName = categories.find((c) => c.id === t.category_id)?.name || "Sem categoria";
+        map.set(catName, (map.get(catName) || 0) + t.amount);
+      });
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  }, [monthTransactions, categories]);
+
+  // Chart data: income vs expense last 6 months
+  const barData = useMemo(() => {
+    const months: { name: string; entradas: number; despesas: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = subMonths(now, i);
+      const m = d.getMonth();
+      const y = d.getFullYear();
+      const monthTxs = transactions.filter((t) => {
+        const td = new Date(t.date);
+        return td.getMonth() === m && td.getFullYear() === y;
+      });
+      months.push({
+        name: format(d, "MMM", { locale: ptBR }),
+        entradas: monthTxs.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0),
+        despesas: monthTxs.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0),
+      });
+    }
+    return months;
+  }, [transactions]);
+
   const handleAdd = async () => {
     if (!description.trim() || !amount) { toast.error("Preencha todos os campos"); return; }
     await addTransaction({
@@ -67,6 +111,20 @@ const DashboardPage = () => {
     return categories.find((c) => c.id === id)?.icon || "💰";
   };
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload) return null;
+    return (
+      <div className="rounded-lg border bg-card p-3 shadow-md">
+        <p className="text-sm font-medium mb-1">{label}</p>
+        {payload.map((p: any) => (
+          <p key={p.dataKey} className="text-xs" style={{ color: p.color }}>
+            {p.name}: R$ {p.value.toFixed(2)}
+          </p>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto space-y-6">
@@ -77,7 +135,7 @@ const DashboardPage = () => {
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="gradient-primary hover:opacity-90"><Plus className="w-4 h-4 mr-2" /> Nova Transação</Button>
+              <Button className="gradient-primary hover:opacity-90 hidden sm:flex"><Plus className="w-4 h-4 mr-2" /> Nova Transação</Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Nova Transação</DialogTitle></DialogHeader>
@@ -131,7 +189,10 @@ const DashboardPage = () => {
                 )}
                 {type === "income" && (
                   <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div><Label>Entrada Recorrente</Label><p className="text-sm text-muted-foreground">Repetir mensalmente</p></div>
+                    <div>
+                      <Label>Entrada Recorrente</Label>
+                      <p className="text-xs text-muted-foreground">Marcada como recorrente para referência</p>
+                    </div>
                     <Switch checked={isRecurring} onCheckedChange={setIsRecurring} />
                   </div>
                 )}
@@ -172,7 +233,54 @@ const DashboardPage = () => {
           ))}
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+        {/* Charts section */}
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="h-full">
+              <CardHeader><CardTitle className="text-base">Despesas por Categoria</CardTitle></CardHeader>
+              <CardContent>
+                {pieData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={3} strokeWidth={0}>
+                        {pieData.map((_, i) => (
+                          <Cell key={i} fill={categories.find(c => c.name === pieData[i].name)?.color || CHART_COLORS[i % CHART_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => `R$ ${v.toFixed(2)}`} contentStyle={{ borderRadius: "0.5rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--card-foreground))" }} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[250px] text-muted-foreground text-sm">
+                    Nenhuma despesa este mês
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <Card className="h-full">
+              <CardHeader><CardTitle className="text-base">Entradas vs Despesas (6 meses)</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={barData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar dataKey="entradas" name="Entradas" fill="hsl(145, 63%, 42%)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="despesas" name="Despesas" fill="hsl(0, 72%, 55%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
           <Card>
             <CardHeader><CardTitle>Transações Recentes</CardTitle></CardHeader>
             <CardContent>
@@ -182,12 +290,12 @@ const DashboardPage = () => {
                   .slice(0, 20)
                   .map((t) => (
                     <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group gap-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-card flex items-center justify-center text-lg">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-lg bg-card flex items-center justify-center text-lg shrink-0">
                           {t.type === "income" ? "💵" : getCategoryIcon(t.category_id)}
                         </div>
-                        <div>
-                          <p className="font-medium text-sm">{t.description}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{t.description}</p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(t.date), "dd/MM/yyyy")}
                             {t.current_installment && ` • ${t.current_installment}/${t.installments}x`}
@@ -217,6 +325,13 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* FAB mobile */}
+        <div className="sm:hidden fixed bottom-6 right-6 z-30">
+          <Button onClick={() => setOpen(true)} className="gradient-primary w-14 h-14 rounded-full shadow-lg hover:opacity-90" size="icon">
+            <Plus className="w-6 h-6" />
+          </Button>
+        </div>
       </div>
     </AppLayout>
   );
