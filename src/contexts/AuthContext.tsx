@@ -7,6 +7,10 @@ interface Profile {
   user_id: string;
   name: string;
   total_limit: number;
+  plan: "free" | "premium";
+  plan_expires_at: string | null;
+  trial_used: boolean;
+  plan_started_at: string | null;
 }
 
 interface AuthContextType {

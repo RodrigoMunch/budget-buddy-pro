@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useFinance } from "@/contexts/FinanceContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,27 +10,30 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
-import { History, CalendarIcon, Filter, Trash2, X } from "lucide-react";
+import UpgradeModal from "@/components/UpgradeModal";
+import { History, CalendarIcon, Filter, Trash2, X, Crown } from "lucide-react";
 import { format, subDays, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
 type PresetKey = "7d" | "14d" | "30d" | "future" | "custom";
 
-const presets: { key: PresetKey; label: string }[] = [
+const presets: { key: PresetKey; label: string; premium?: boolean }[] = [
   { key: "7d", label: "Últimos 7 dias" },
   { key: "14d", label: "Últimos 14 dias" },
   { key: "30d", label: "Últimos 30 dias" },
   { key: "future", label: "Lançamentos futuros" },
-  { key: "custom", label: "Personalizado" },
+  { key: "custom", label: "Personalizado", premium: true },
 ];
 
 const HistoryPage = () => {
   const { transactions, categories, deleteTransaction } = useFinance();
+  const { isPremiumActive, canViewHistory } = usePermissions();
   const [activePreset, setActivePreset] = useState<PresetKey>("30d");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const getDateRange = (): { from: Date | null; to: Date | null } => {
     const today = new Date();
@@ -45,24 +49,40 @@ const HistoryPage = () => {
 
   const filteredTransactions = useMemo(() => {
     const { from, to } = getDateRange();
+    const now = new Date();
     return transactions
       .filter((t) => {
         if (t.type !== "expense") return false;
         const d = new Date(t.date);
+
+        // Free plan: only current month
+        if (!isPremiumActive) {
+          if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        }
+
         if (from && isBefore(d, startOfDay(from))) return false;
         if (to && isAfter(d, endOfDay(to))) return false;
         if (categoryFilter !== "all" && t.category_id !== categoryFilter) return false;
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, activePreset, dateRange, categoryFilter]);
+  }, [transactions, activePreset, dateRange, categoryFilter, isPremiumActive]);
 
   const totalFiltered = filteredTransactions.reduce((s, t) => s + t.amount, 0);
   const getCategoryName = (id?: string | null) => categories.find((c) => c.id === id)?.name || "Sem categoria";
   const getCategoryIcon = (id?: string | null) => categories.find((c) => c.id === id)?.icon || "💰";
   const getCategoryColor = (id?: string | null) => categories.find((c) => c.id === id)?.color || "#6c5ce7";
 
-  const handlePreset = (key: PresetKey) => { setActivePreset(key); if (key !== "custom") setDateRange(undefined); };
+  const handlePreset = (key: PresetKey) => {
+    if (!isPremiumActive && (key === "custom" || key === "14d")) {
+      setUpgradeOpen(true);
+      return;
+    }
+    setActivePreset(key);
+    if (key !== "custom") setDateRange(undefined);
+  };
 
   return (
     <AppLayout>
@@ -70,9 +90,24 @@ const HistoryPage = () => {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-1">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><History className="w-5 h-5 text-primary-foreground" /></div>
-            <div><h1 className="text-3xl font-bold">Histórico de Despesas</h1><p className="text-muted-foreground text-sm">Filtre e analise suas despesas</p></div>
+            <div>
+              <h1 className="text-3xl font-bold">Histórico de Despesas</h1>
+              <p className="text-muted-foreground text-sm">
+                {isPremiumActive ? "Filtre e analise suas despesas" : "Histórico do mês atual (Premium para histórico completo)"}
+              </p>
+            </div>
           </div>
         </motion.div>
+
+        {!isPremiumActive && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 text-sm">
+              <Crown className="w-4 h-4 text-primary shrink-0" />
+              <span>No plano gratuito, o histórico é limitado ao mês atual. <strong>Desbloqueie todos os meses</strong> com o Premium.</span>
+              <Button size="sm" variant="ghost" className="ml-auto text-primary shrink-0" onClick={() => setUpgradeOpen(true)}>Upgrade</Button>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card>
@@ -81,11 +116,14 @@ const HistoryPage = () => {
               <div className="flex flex-wrap gap-2">
                 {presets.map((p) => (
                   <Button key={p.key} size="sm" variant={activePreset === p.key ? "default" : "outline"}
-                    className={activePreset === p.key ? "gradient-primary text-primary-foreground" : ""}
-                    onClick={() => handlePreset(p.key)}>{p.label}</Button>
+                    className={`${activePreset === p.key ? "gradient-primary text-primary-foreground" : ""} ${p.premium && !isPremiumActive ? "opacity-70" : ""}`}
+                    onClick={() => handlePreset(p.key)}>
+                    {p.label}
+                    {p.premium && !isPremiumActive && <Crown className="w-3 h-3 ml-1 text-warning" />}
+                  </Button>
                 ))}
               </div>
-              {activePreset === "custom" && (
+              {activePreset === "custom" && isPremiumActive && (
                 <div className="flex items-center gap-2">
                   <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
@@ -150,6 +188,8 @@ const HistoryPage = () => {
             </CardContent>
           </Card>
         </motion.div>
+
+        <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} feature="Desbloqueie o histórico completo com todos os meses, filtros avançados e período personalizado." />
       </div>
     </AppLayout>
   );

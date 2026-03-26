@@ -49,7 +49,11 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          plan: string
+          plan_expires_at: string | null
+          plan_started_at: string | null
           total_limit: number
+          trial_used: boolean
           updated_at: string
           user_id: string
         }
@@ -57,7 +61,11 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          plan?: string
+          plan_expires_at?: string | null
+          plan_started_at?: string | null
           total_limit?: number
+          trial_used?: boolean
           updated_at?: string
           user_id: string
         }
@@ -65,7 +73,11 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          plan?: string
+          plan_expires_at?: string | null
+          plan_started_at?: string | null
           total_limit?: number
+          trial_used?: boolean
           updated_at?: string
           user_id?: string
         }
