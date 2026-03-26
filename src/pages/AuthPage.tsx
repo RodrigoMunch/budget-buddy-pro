@@ -25,7 +25,7 @@ const AuthPage = () => {
     if (isLogin) {
       const { error } = await login(email, password);
       if (error) toast.error(error);
-      else { toast.success("Login realizado com sucesso!"); navigate("/"); }
+      else { toast.success("Login realizado com sucesso!"); navigate("/dashboard"); }
     } else {
       const { error } = await register(name, email, password);
       if (error) toast.error(error);
