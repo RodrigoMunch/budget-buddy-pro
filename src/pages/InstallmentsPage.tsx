@@ -1,16 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { useFinance } from "@/contexts/FinanceContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import AppLayout from "@/components/AppLayout";
-import { CreditCard, CalendarRange } from "lucide-react";
+import UpgradeModal from "@/components/UpgradeModal";
+import { CreditCard, CalendarRange, Crown } from "lucide-react";
 import { format, addMonths, startOfMonth, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const InstallmentsPage = () => {
   const { transactions, categories } = useFinance();
+  const { isPremiumActive, activeInstallmentsCount, FREE_LIMITS } = usePermissions();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const installmentGroups = new Map<string, typeof transactions>();
   transactions.forEach((t) => {
@@ -49,15 +54,33 @@ const InstallmentsPage = () => {
     return total;
   });
 
+  const activeCount = activeInstallmentsCount();
+
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-1">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><CreditCard className="w-5 h-5 text-primary-foreground" /></div>
-            <div><h1 className="text-3xl font-bold">Parcelamentos</h1><p className="text-muted-foreground text-sm">Projeção de parcelas futuras</p></div>
+            <div>
+              <h1 className="text-3xl font-bold">Parcelamentos</h1>
+              <p className="text-muted-foreground text-sm">
+                Projeção de parcelas futuras
+                {!isPremiumActive && ` (${activeCount}/${FREE_LIMITS.maxActiveInstallments} ativos)`}
+              </p>
+            </div>
           </div>
         </motion.div>
+
+        {!isPremiumActive && activeCount >= FREE_LIMITS.maxActiveInstallments && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/20 px-4 py-3 text-sm">
+              <Crown className="w-4 h-4 text-warning shrink-0" />
+              <span>Você atingiu o limite de <strong>{FREE_LIMITS.maxActiveInstallments} parcelamentos ativos</strong>. Desbloqueie ilimitados com o Premium!</span>
+              <Button size="sm" variant="ghost" className="ml-auto text-warning shrink-0" onClick={() => setUpgradeOpen(true)}>Upgrade</Button>
+            </div>
+          </motion.div>
+        )}
 
         {groupEntries.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -122,6 +145,8 @@ const InstallmentsPage = () => {
             </motion.div>
           </>
         )}
+
+        <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} feature={`Você atingiu o limite de ${FREE_LIMITS.maxActiveInstallments} parcelamentos ativos. Com o Premium, crie parcelamentos ilimitados!`} />
       </div>
     </AppLayout>
   );

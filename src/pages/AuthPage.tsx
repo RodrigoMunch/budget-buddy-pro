@@ -29,7 +29,7 @@ const AuthPage = () => {
     } else {
       const { error } = await register(name, email, password);
       if (error) toast.error(error);
-      else { toast.success("Conta criada com sucesso!"); navigate("/"); }
+      else { toast.success("Conta criada com sucesso!"); navigate("/dashboard"); }
     }
     setLoading(false);
   };

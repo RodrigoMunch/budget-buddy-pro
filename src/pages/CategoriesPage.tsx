@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useFinance, Category } from "@/contexts/FinanceContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,18 +9,30 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
-import { Plus, Pencil, Trash2, Tags } from "lucide-react";
+import UpgradeModal from "@/components/UpgradeModal";
+import { Plus, Pencil, Trash2, Tags, Crown } from "lucide-react";
 
 const COLORS = ["#5954DD", "#4B47BB", "#5B57E5", "#3D3A99", "#302D77", "#222055", "#e74c3c", "#27ae60", "#f39c12", "#2980b9"];
 const ICONS = ["🏠", "🍔", "🚗", "💊", "🎮", "📚", "👗", "✈️", "💡", "📱"];
 
 const CategoriesPage = () => {
   const { categories, addCategory, updateCategory, deleteCategory, transactions } = useFinance();
+  const { canCreateCategory, categoriesRemaining, isPremiumActive, FREE_LIMITS } = usePermissions();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", color: COLORS[0], limit: "0", icon: ICONS[0] });
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  const openNew = () => { setEditId(null); setForm({ name: "", color: COLORS[0], limit: "0", icon: ICONS[0] }); setOpen(true); };
+  const openNew = () => {
+    if (!canCreateCategory()) {
+      setUpgradeOpen(true);
+      return;
+    }
+    setEditId(null);
+    setForm({ name: "", color: COLORS[0], limit: "0", icon: ICONS[0] });
+    setOpen(true);
+  };
+
   const openEdit = (cat: Category) => { setEditId(cat.id); setForm({ name: cat.name, color: cat.color, limit: cat.limit.toString(), icon: cat.icon }); setOpen(true); };
 
   const handleSave = async () => {
@@ -43,7 +56,12 @@ const CategoriesPage = () => {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Categorias</h1>
-            <p className="text-muted-foreground mt-1">Organize seus gastos por categorias</p>
+            <p className="text-muted-foreground mt-1">
+              Organize seus gastos por categorias
+              {!isPremiumActive && (
+                <span className="ml-2 text-xs">({categories.length}/{FREE_LIMITS.maxCategories} usadas)</span>
+              )}
+            </p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -76,6 +94,17 @@ const CategoriesPage = () => {
             </DialogContent>
           </Dialog>
         </motion.div>
+
+        {/* Limit warning banner */}
+        {!isPremiumActive && categoriesRemaining() <= 1 && categoriesRemaining() > 0 && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/20 px-4 py-3 text-sm">
+              <Crown className="w-4 h-4 text-warning shrink-0" />
+              <span>Você pode criar mais <strong>{categoriesRemaining()}</strong> categoria(s). Desbloqueie ilimitadas com o Premium!</span>
+              <Button size="sm" variant="ghost" className="ml-auto text-warning shrink-0" onClick={() => setUpgradeOpen(true)}>Upgrade</Button>
+            </div>
+          </motion.div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-2">
           {categories.map((cat, i) => {
@@ -116,6 +145,8 @@ const CategoriesPage = () => {
             </div>
           )}
         </div>
+
+        <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} feature={`Você usou ${categories.length}/${FREE_LIMITS.maxCategories} categorias. Com o Premium, crie categorias ilimitadas!`} />
       </div>
     </AppLayout>
   );

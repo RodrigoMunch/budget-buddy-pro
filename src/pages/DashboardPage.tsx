@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useFinance } from "@/contexts/FinanceContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,25 +14,22 @@ import { Switch } from "@/components/ui/switch";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
-import { Plus, TrendingUp, TrendingDown, Wallet, Target, Trash2, CalendarIcon } from "lucide-react";
+import PremiumGate from "@/components/PremiumGate";
+import UpgradeModal from "@/components/UpgradeModal";
+import { Plus, TrendingUp, TrendingDown, Wallet, Target, Trash2, CalendarIcon, Crown } from "lucide-react";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 
 const CHART_COLORS = [
-  "hsl(242, 65%, 60%)",
-  "hsl(145, 63%, 42%)",
-  "hsl(0, 72%, 55%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(200, 70%, 50%)",
-  "hsl(280, 60%, 55%)",
-  "hsl(170, 55%, 45%)",
-  "hsl(20, 80%, 55%)",
+  "hsl(242, 65%, 60%)", "hsl(145, 63%, 42%)", "hsl(0, 72%, 55%)", "hsl(38, 92%, 50%)",
+  "hsl(200, 70%, 50%)", "hsl(280, 60%, 55%)", "hsl(170, 55%, 45%)", "hsl(20, 80%, 55%)",
 ];
 
 const DashboardPage = () => {
   const { activeProfile } = useAuth();
   const { categories, transactions, addTransaction, deleteTransaction } = useFinance();
+  const { canViewBarChart, isPremiumActive } = usePermissions();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"expense" | "income">("expense");
   const [description, setDescription] = useState("");
@@ -41,6 +39,7 @@ const DashboardPage = () => {
   const [installments, setInstallments] = useState("1");
   const [isRecurring, setIsRecurring] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const now = new Date();
   const monthTransactions = transactions.filter((t) => {
@@ -54,7 +53,6 @@ const DashboardPage = () => {
   const totalLimit = activeProfile?.total_limit || 0;
   const limitPct = totalLimit ? Math.min((totalExpense / totalLimit) * 100, 100) : 0;
 
-  // Chart data: expenses by category (current month)
   const pieData = useMemo(() => {
     const map = new Map<string, number>();
     monthTransactions
@@ -66,7 +64,6 @@ const DashboardPage = () => {
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
   }, [monthTransactions, categories]);
 
-  // Chart data: income vs expense last 6 months
   const barData = useMemo(() => {
     const months: { name: string; entradas: number; despesas: number }[] = [];
     for (let i = 5; i >= 0; i--) {
@@ -89,8 +86,7 @@ const DashboardPage = () => {
   const handleAdd = async () => {
     if (!description.trim() || !amount) { toast.error("Preencha todos os campos"); return; }
     await addTransaction({
-      type,
-      description,
+      type, description,
       amount: parseFloat(amount),
       date: format(date, "yyyy-MM-dd"),
       category_id: type === "expense" ? categoryId || null : null,
@@ -102,14 +98,8 @@ const DashboardPage = () => {
     setDescription(""); setAmount(""); setCategoryId(""); setInstallments("1"); setIsRecurring(false); setDate(new Date());
   };
 
-  const getCategoryName = (id?: string | null) => {
-    if (!id) return "Sem categoria";
-    return categories.find((c) => c.id === id)?.name || "—";
-  };
-  const getCategoryIcon = (id?: string | null) => {
-    if (!id) return "💰";
-    return categories.find((c) => c.id === id)?.icon || "💰";
-  };
+  const getCategoryName = (id?: string | null) => !id ? "Sem categoria" : categories.find((c) => c.id === id)?.name || "—";
+  const getCategoryIcon = (id?: string | null) => !id ? "💰" : categories.find((c) => c.id === id)?.icon || "💰";
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload) return null;
@@ -261,22 +251,29 @@ const DashboardPage = () => {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            <Card className="h-full">
-              <CardHeader><CardTitle className="text-base">Entradas vs Despesas (6 meses)</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={barData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Bar dataKey="entradas" name="Entradas" fill="hsl(145, 63%, 42%)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="despesas" name="Despesas" fill="hsl(0, 72%, 55%)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <PremiumGate locked={!canViewBarChart} feature="Gráfico de barras com evolução de 6 meses. Desbloqueie com o Premium para visualizar tendências.">
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    Entradas vs Despesas (6 meses)
+                    {!canViewBarChart && <Crown className="w-4 h-4 text-warning" />}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={barData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Bar dataKey="entradas" name="Entradas" fill="hsl(145, 63%, 42%)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="despesas" name="Despesas" fill="hsl(0, 72%, 55%)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </PremiumGate>
           </motion.div>
         </div>
 
@@ -332,6 +329,8 @@ const DashboardPage = () => {
             <Plus className="w-6 h-6" />
           </Button>
         </div>
+
+        <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       </div>
     </AppLayout>
   );
