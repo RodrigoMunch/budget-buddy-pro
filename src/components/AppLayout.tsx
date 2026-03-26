@@ -1,27 +1,40 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LayoutDashboard, Tags, User, LogOut, DollarSign, CreditCard, History, Shield, Menu, X } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
+import { LayoutDashboard, Tags, User, LogOut, DollarSign, CreditCard, History, Shield, Menu, X, Crown } from "lucide-react";
+import PremiumBadge from "./PremiumBadge";
 import ThemeToggle from "./ThemeToggle";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/installments", label: "Parcelamentos", icon: CreditCard },
-  { to: "/history", label: "Histórico", icon: History },
-  { to: "/categories", label: "Categorias", icon: Tags },
-  { to: "/profile", label: "Perfil", icon: User },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, premium: false },
+  { to: "/installments", label: "Parcelamentos", icon: CreditCard, premium: false },
+  { to: "/history", label: "Histórico", icon: History, premium: false },
+  { to: "/categories", label: "Categorias", icon: Tags, premium: false },
+  { to: "/profile", label: "Perfil", icon: User, premium: false },
 ];
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { profile, logout, impersonating, stopImpersonating } = useAuth();
+  const { isTrialActive, trialDaysRemaining, isPremiumActive } = usePermissions();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex">
+      {/* Trial banner */}
+      {isTrialActive && trialDaysRemaining > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-50 gradient-primary text-primary-foreground text-center py-1.5 text-sm font-medium">
+          <Crown className="w-3.5 h-3.5 inline mr-1" />
+          {trialDaysRemaining === 1
+            ? "Último dia do seu trial Premium!"
+            : `Faltam ${trialDaysRemaining} dias do seu trial Premium`}
+        </div>
+      )}
+
       {/* Impersonation top bar */}
       {impersonating && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-warning/90 text-warning-foreground text-center py-1.5 text-sm font-medium">
+        <div className={`fixed left-0 right-0 z-50 bg-warning/90 text-warning-foreground text-center py-1.5 text-sm font-medium ${isTrialActive ? "top-8" : "top-0"}`}>
           <Shield className="w-3.5 h-3.5 inline mr-1" />
           Visualizando como: <strong>{impersonating.name}</strong>
           <button onClick={stopImpersonating} className="ml-3 underline hover:no-underline">Voltar à minha conta</button>
@@ -29,10 +42,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       {/* Desktop sidebar */}
-      <aside className={`w-64 gradient-dark text-primary-foreground flex-col fixed h-full z-20 hidden lg:flex ${impersonating ? "mt-8" : ""}`}>
+      <aside className={`w-64 gradient-dark text-primary-foreground flex-col fixed h-full z-20 hidden lg:flex ${impersonating || isTrialActive ? "mt-8" : ""} ${impersonating && isTrialActive ? "mt-16" : ""}`}>
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><DollarSign className="w-5 h-5" /></div>
           <span className="text-xl font-bold">FinControl</span>
+          {isPremiumActive && <PremiumBadge />}
         </div>
         <nav className="flex-1 px-3 mt-4 space-y-1">
           {navItems.map((item) => {
@@ -40,7 +54,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             return (
               <Link key={item.to} to={item.to}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive ? "gradient-primary text-primary-foreground" : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-deep/50"}`}>
-                <item.icon className="w-5 h-5" />{item.label}
+                <item.icon className="w-5 h-5" />
+                {item.label}
               </Link>
             );
           })}
@@ -61,11 +76,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Mobile header bar */}
-      <div className={`lg:hidden fixed top-0 left-0 right-0 z-30 gradient-dark ${impersonating ? "mt-8" : ""}`}>
+      <div className={`lg:hidden fixed top-0 left-0 right-0 z-30 gradient-dark ${impersonating || isTrialActive ? "mt-8" : ""} ${impersonating && isTrialActive ? "mt-16" : ""}`}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center"><DollarSign className="w-4 h-4 text-primary-foreground" /></div>
             <span className="text-lg font-bold text-primary-foreground">FinControl</span>
+            {isPremiumActive && <PremiumBadge />}
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle className="text-primary-foreground/70 hover:text-primary-foreground" />
@@ -82,7 +98,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       {/* Mobile slide-out menu */}
-      <div className={`lg:hidden fixed top-0 left-0 h-full w-64 z-40 gradient-dark text-primary-foreground transform transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${impersonating ? "pt-8" : ""}`}>
+      <div className={`lg:hidden fixed top-0 left-0 h-full w-64 z-40 gradient-dark text-primary-foreground transform transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${impersonating || isTrialActive ? "pt-8" : ""} ${impersonating && isTrialActive ? "pt-16" : ""}`}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><DollarSign className="w-5 h-5" /></div>
@@ -96,7 +112,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             return (
               <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive ? "gradient-primary text-primary-foreground" : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-deep/50"}`}>
-                <item.icon className="w-5 h-5" />{item.label}
+                <item.icon className="w-5 h-5" />
+                {item.label}
               </Link>
             );
           })}
@@ -113,7 +130,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
-      <main className={`flex-1 lg:ml-64 p-4 lg:p-6 pt-16 lg:pt-6 ${impersonating ? "mt-8" : ""}`}>{children}</main>
+      <main className={`flex-1 lg:ml-64 p-4 lg:p-6 pt-16 lg:pt-6 ${impersonating || isTrialActive ? "mt-8" : ""} ${impersonating && isTrialActive ? "mt-16" : ""}`}>{children}</main>
     </div>
   );
 };

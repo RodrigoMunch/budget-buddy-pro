@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { FinanceProvider } from "@/contexts/FinanceContext";
+import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import CategoriesPage from "./pages/CategoriesPage";
@@ -25,13 +26,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? <Navigate to="/" replace /> : <>{children}</>;
+  return user ? <Navigate to="/dashboard" replace /> : <>{children}</>;
 };
 
 const AppRoutes = () => (
   <Routes>
+    <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
     <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
-    <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+    <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
     <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
     <Route path="/installments" element={<ProtectedRoute><InstallmentsPage /></ProtectedRoute>} />
     <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
