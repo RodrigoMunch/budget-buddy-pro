@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
@@ -13,6 +13,12 @@ interface Profile {
   plan_started_at: string | null;
 }
 
+interface SubscriptionInfo {
+  subscribed: boolean;
+  product_id: string | null;
+  subscription_end: string | null;
+}
+
 interface AuthContextType {
   user: SupabaseUser | null;
   session: Session | null;
@@ -20,14 +26,15 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   impersonating: Profile | null;
+  subscription: SubscriptionInfo | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ error?: string }>;
-  
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
   impersonateUser: (email: string) => Promise<{ error?: string }>;
   stopImpersonating: () => void;
-  activeProfile: Profile | null; // either impersonated or own profile
+  checkSubscription: () => Promise<void>;
+  activeProfile: Profile | null;
   activeUserId: string | null;
 }
 
@@ -46,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [impersonating, setImpersonating] = useState<Profile | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
 
   const activeProfile = impersonating || profile;
   const activeUserId = impersonating?.user_id || user?.id || null;
@@ -67,13 +75,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAdmin(data?.some((r: any) => r.role === "admin") || false);
   };
 
+  const checkSubscription = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) {
+        console.error("Check subscription error:", error);
+        return;
+      }
+      if (data) {
+        setSubscription(data as SubscriptionInfo);
+        // Refresh profile to get updated plan
+        if (user?.id) {
+          await fetchProfile(user.id);
+        }
+      }
+    } catch (err) {
+      console.error("Check subscription error:", err);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Use setTimeout to avoid potential deadlocks with Supabase auth
           setTimeout(async () => {
             await fetchProfile(session.user.id);
             await fetchRole(session.user.id);
@@ -83,6 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(null);
           setIsAdmin(false);
           setImpersonating(null);
+          setSubscription(null);
           setLoading(false);
         }
       }
@@ -100,8 +127,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => authSub.unsubscribe();
   }, []);
+
+  // Check subscription on login and periodically
+  useEffect(() => {
+    if (!user) return;
+    checkSubscription();
+    const interval = setInterval(checkSubscription, 60000); // every minute
+    return () => clearInterval(interval);
+  }, [user, checkSubscription]);
+
+  // Check subscription on URL params (after checkout redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success" && user) {
+      // Delay to allow Stripe webhook processing
+      setTimeout(checkSubscription, 2000);
+    }
+  }, [user, checkSubscription]);
 
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -118,7 +162,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (error) return { error: error.message };
     return {};
   };
-
 
   const logout = async () => {
     setImpersonating(null);
@@ -139,7 +182,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data, error } = await supabase.rpc("get_user_by_email", { _email: email });
     if (error || !data || (data as any[]).length === 0) return { error: "Usuário não encontrado" };
     const target = (data as any[])[0];
-    // Fetch full profile
     const { data: prof } = await supabase
       .from("profiles")
       .select("*")
@@ -156,6 +198,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user, session, profile, isAdmin, loading,
         impersonating, activeProfile, activeUserId,
+        subscription, checkSubscription,
         login, register, logout,
         updateProfile, impersonateUser, stopImpersonating,
       }}
