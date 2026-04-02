@@ -47,9 +47,18 @@ const DashboardPage = () => {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
 
+  // Current month income/expense (for cards)
   const totalIncome = monthTransactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const totalExpense = monthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
-  const balance = totalIncome - totalExpense;
+
+  // Accumulated balance: all transactions up to end of current month
+  const balance = useMemo(() => {
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    return transactions
+      .filter((t) => new Date(t.date) <= endOfMonth)
+      .reduce((acc, t) => acc + (t.type === "income" ? t.amount : -t.amount), 0);
+  }, [transactions]);
+
   const totalLimit = activeProfile?.total_limit || 0;
   const limitPct = totalLimit ? Math.min((totalExpense / totalLimit) * 100, 100) : 0;
 
