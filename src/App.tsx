@@ -38,6 +38,7 @@ const AppRoutes = () => (
     <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
     <Route path="/installments" element={<ProtectedRoute><InstallmentsPage /></ProtectedRoute>} />
     <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+    <Route path="/recurring" element={<ProtectedRoute><RecurringIncomePage /></ProtectedRoute>} />
     <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
