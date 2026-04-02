@@ -118,19 +118,43 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      productId = subscription.items.data[0].price.product;
+      logStep("Raw subscription data", {
+        current_period_end: subscription.current_period_end,
+        current_period_start: subscription.current_period_start,
+        type_end: typeof subscription.current_period_end,
+      });
+
+      // Handle both numeric timestamps and ISO string dates
+      const endValue = subscription.current_period_end;
+      const startValue = subscription.current_period_start;
+      
+      if (typeof endValue === "number") {
+        subscriptionEnd = new Date(endValue * 1000).toISOString();
+      } else if (typeof endValue === "string") {
+        subscriptionEnd = new Date(endValue).toISOString();
+      }
+
+      let subscriptionStart: string | null = null;
+      if (typeof startValue === "number") {
+        subscriptionStart = new Date(startValue * 1000).toISOString();
+      } else if (typeof startValue === "string") {
+        subscriptionStart = new Date(startValue).toISOString();
+      }
+
+      productId = subscription.items.data[0]?.price?.product ?? null;
       logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
 
       // Update profile to premium
+      const updateData: any = {
+        plan: "premium",
+        trial_used: true,
+      };
+      if (subscriptionEnd) updateData.plan_expires_at = subscriptionEnd;
+      if (subscriptionStart) updateData.plan_started_at = subscriptionStart;
+
       await supabaseClient
         .from("profiles")
-        .update({
-          plan: "premium",
-          plan_expires_at: subscriptionEnd,
-          plan_started_at: new Date(subscription.current_period_start * 1000).toISOString(),
-          trial_used: true,
-        })
+        .update(updateData)
         .eq("user_id", user.id);
     } else {
       logStep("No active subscription found");
