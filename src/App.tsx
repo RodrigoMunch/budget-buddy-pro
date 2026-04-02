@@ -13,6 +13,7 @@ import CategoriesPage from "./pages/CategoriesPage";
 import ProfilePage from "./pages/ProfilePage";
 import InstallmentsPage from "./pages/InstallmentsPage";
 import HistoryPage from "./pages/HistoryPage";
+import RecurringIncomePage from "./pages/RecurringIncomePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
