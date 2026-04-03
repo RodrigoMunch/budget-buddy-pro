@@ -90,14 +90,37 @@ const HistoryPage = () => {
     <AppLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><History className="w-5 h-5 text-primary-foreground" /></div>
-            <div>
-              <h1 className="text-3xl font-bold">Histórico de Despesas</h1>
-              <p className="text-muted-foreground text-sm">
-                {isPremiumActive ? "Filtre e analise suas despesas" : "Histórico do mês atual (Premium para histórico completo)"}
-              </p>
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><History className="w-5 h-5 text-primary-foreground" /></div>
+              <div>
+                <h1 className="text-3xl font-bold">Histórico de Despesas</h1>
+                <p className="text-muted-foreground text-sm">
+                  {isPremiumActive ? "Filtre e analise suas despesas" : "Histórico do mês atual (Premium para histórico completo)"}
+                </p>
+              </div>
             </div>
+            {isPremiumActive ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={filteredTransactions.length === 0}>
+                    <Download className="w-4 h-4 mr-2" /> Exportar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => { exportToPDF({ transactions: filteredTransactions, categories, title: "Histórico de Despesas" }); toast.success("PDF exportado!"); }}>
+                    <FileText className="w-4 h-4 mr-2" /> Exportar PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { exportToCSV({ transactions: filteredTransactions, categories, title: "historico_despesas" }); toast.success("CSV exportado!"); }}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" /> Exportar CSV
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setUpgradeOpen(true)}>
+                <Crown className="w-4 h-4 mr-2 text-warning" /> Exportar
+              </Button>
+            )}
           </div>
         </motion.div>
 
