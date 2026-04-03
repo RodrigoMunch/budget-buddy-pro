@@ -92,7 +92,8 @@ const LandingPage = () => {
             </Link>
             <Link to="/auth">
               <Button size="sm" className="gradient-primary hover:opacity-90">
-                Criar Conta Grátis
+                <span className="hidden sm:inline">Criar Conta Grátis</span>
+                <span className="sm:hidden">Criar Conta</span>
               </Button>
             </Link>
           </div>
