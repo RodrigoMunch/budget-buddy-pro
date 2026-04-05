@@ -122,7 +122,7 @@ const RecurringIncomePage = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3"
+              className="grid gap-3 sm:gap-4 grid-cols-1"
             >
               <Card>
                 <CardContent className="p-3 sm:p-5">
