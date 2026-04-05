@@ -144,7 +144,7 @@ const RecurringIncomePage = () => {
                     <CalendarRange className="w-4 h-4 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">Projeção Anual</p>
                   </div>
-                  <p className="text-lg sm:text-2xl font-bold text-success">
+                  <p className="text-2xl font-bold text-success">
                     R$ {monthlyProjection.reduce((a, b) => a + b, 0).toFixed(2)}
                   </p>
                 </CardContent>
