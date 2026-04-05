@@ -122,29 +122,29 @@ const RecurringIncomePage = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="grid gap-3 sm:gap-4 grid-cols-3"
+              className="grid gap-4 grid-cols-1 sm:grid-cols-3"
             >
               <Card>
-                <CardContent className="p-3 sm:p-5">
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Entradas Recorrentes</p>
-                  <p className="text-lg sm:text-2xl font-bold">{recurringIncomes.length}</p>
+                <CardContent className="p-5">
+                  <p className="text-sm text-muted-foreground mb-1">Entradas Recorrentes</p>
+                  <p className="text-2xl font-bold">{recurringIncomes.length}</p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-3 sm:p-5">
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Total Mensal Estimado</p>
-                  <p className="text-lg sm:text-2xl font-bold text-success">
+                <CardContent className="p-5">
+                  <p className="text-sm text-muted-foreground mb-1">Total Mensal Estimado</p>
+                  <p className="text-2xl font-bold text-success">
                     R$ {totalMonthly.toFixed(2)}
                   </p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-3 sm:p-5">
-                  <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                    <CalendarRange className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
-                    <p className="text-xs sm:text-sm text-muted-foreground">Projeção Anual</p>
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CalendarRange className="w-4 h-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Projeção Anual</p>
                   </div>
-                  <p className="text-lg sm:text-2xl font-bold text-success">
+                  <p className="text-2xl font-bold text-success">
                     R$ {monthlyProjection.reduce((a, b) => a + b, 0).toFixed(2)}
                   </p>
                 </CardContent>

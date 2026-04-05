@@ -113,7 +113,7 @@ const DashboardPage = () => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload) return null;
     return (
-      <div className="rounded-lg border bg-card p-3 shadow-md">
+      <div className="rounded-lg border bg-card text-card-foreground p-3 shadow-md">
         <p className="text-sm font-medium mb-1">{label}</p>
         {payload.map((p: any) => (
           <p key={p.dataKey} className="text-xs" style={{ color: p.color }}>
@@ -246,7 +246,7 @@ const DashboardPage = () => {
                           <Cell key={i} fill={categories.find(c => c.name === pieData[i].name)?.color || CHART_COLORS[i % CHART_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(v: number) => `R$ ${v.toFixed(2)}`} contentStyle={{ borderRadius: "0.5rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--card-foreground))" }} />
+                      <Tooltip formatter={(v: number) => `R$ ${v.toFixed(2)}`} contentStyle={{ borderRadius: "0.5rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--card-foreground))" }} itemStyle={{ color: "hsl(var(--card-foreground))" }} labelStyle={{ color: "hsl(var(--card-foreground))" }} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
