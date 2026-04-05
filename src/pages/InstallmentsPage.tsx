@@ -61,10 +61,10 @@ const InstallmentsPage = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl gradient-primary flex items-center justify-center"><CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" /></div>
+            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><CreditCard className="w-5 h-5 text-primary-foreground" /></div>
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold">Parcelamentos</h1>
-              <p className="text-muted-foreground text-xs sm:text-sm">
+              <h1 className="text-3xl font-bold">Parcelamentos</h1>
+              <p className="text-muted-foreground text-sm">
                 Projeção de parcelas futuras
                 {!isPremiumActive && ` (${activeCount}/${FREE_LIMITS.maxActiveInstallments} ativos)`}
               </p>
