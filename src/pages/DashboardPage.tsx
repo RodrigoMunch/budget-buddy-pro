@@ -113,7 +113,7 @@ const DashboardPage = () => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload) return null;
     return (
-      <div className="rounded-lg border bg-card p-3 shadow-md">
+      <div className="rounded-lg border bg-card text-card-foreground p-3 shadow-md">
         <p className="text-sm font-medium mb-1">{label}</p>
         {payload.map((p: any) => (
           <p key={p.dataKey} className="text-xs" style={{ color: p.color }}>
