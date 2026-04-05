@@ -131,7 +131,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
-      <main className={`flex-1 lg:ml-64 p-4 lg:p-6 pt-16 lg:pt-6 ${impersonating || isTrialActive ? "mt-8" : ""} ${impersonating && isTrialActive ? "mt-16" : ""}`}>{children}</main>
+      <main className={`flex-1 lg:ml-64 p-4 lg:p-6 pt-20 lg:pt-6 ${impersonating || isTrialActive ? "mt-8" : ""} ${impersonating && isTrialActive ? "mt-16" : ""}`}>{children}</main>
     </div>
   );
 };

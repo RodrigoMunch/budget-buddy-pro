@@ -91,13 +91,13 @@ const RecurringIncomePage = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-success flex items-center justify-center">
-              <RefreshCw className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-success flex items-center justify-center">
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Entradas Recorrentes</h1>
-              <p className="text-muted-foreground text-sm">
-                Gerencie suas receitas recorrentes e veja a projeção futura
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-3xl font-bold truncate">Entradas Recorrentes</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm truncate">
+                Gerencie suas receitas recorrentes e veja a projeção
               </p>
             </div>
           </div>
@@ -122,29 +122,29 @@ const RecurringIncomePage = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="grid gap-4 grid-cols-1 sm:grid-cols-3"
+              className="grid gap-3 sm:gap-4 grid-cols-3"
             >
               <Card>
-                <CardContent className="p-5">
-                  <p className="text-sm text-muted-foreground mb-1">Entradas Recorrentes</p>
-                  <p className="text-2xl font-bold">{recurringIncomes.length}</p>
+                <CardContent className="p-3 sm:p-5">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Entradas Recorrentes</p>
+                  <p className="text-lg sm:text-2xl font-bold">{recurringIncomes.length}</p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-5">
-                  <p className="text-sm text-muted-foreground mb-1">Total Mensal Estimado</p>
-                  <p className="text-2xl font-bold text-success">
+                <CardContent className="p-3 sm:p-5">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Total Mensal Estimado</p>
+                  <p className="text-lg sm:text-2xl font-bold text-success">
                     R$ {totalMonthly.toFixed(2)}
                   </p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <CalendarRange className="w-4 h-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Projeção Anual</p>
+                <CardContent className="p-3 sm:p-5">
+                  <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                    <CalendarRange className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+                    <p className="text-xs sm:text-sm text-muted-foreground">Projeção Anual</p>
                   </div>
-                  <p className="text-2xl font-bold text-success">
+                  <p className="text-lg sm:text-2xl font-bold text-success">
                     R$ {monthlyProjection.reduce((a, b) => a + b, 0).toFixed(2)}
                   </p>
                 </CardContent>
