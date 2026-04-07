@@ -10,13 +10,15 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import UpgradeModal from "@/components/UpgradeModal";
-import { Plus, Pencil, Trash2, Tags, Crown } from "lucide-react";
+import { Plus, Pencil, Tags, Crown } from "lucide-react";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
+import { CardsSkeleton } from "@/components/PageSkeleton";
 
 const COLORS = ["#5954DD", "#4B47BB", "#5B57E5", "#3D3A99", "#302D77", "#222055", "#e74c3c", "#27ae60", "#f39c12", "#2980b9"];
 const ICONS = ["🏠", "🍔", "🚗", "💊", "🎮", "📚", "👗", "✈️", "💡", "📱"];
 
 const CategoriesPage = () => {
-  const { categories, addCategory, updateCategory, deleteCategory, transactions } = useFinance();
+  const { categories, addCategory, updateCategory, deleteCategory, transactions, loading } = useFinance();
   const { canCreateCategory, categoriesRemaining, isPremiumActive, FREE_LIMITS } = usePermissions();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -49,6 +51,8 @@ const CategoriesPage = () => {
       .filter((t) => t.type === "expense" && t.category_id === catId && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
       .reduce((sum, t) => sum + t.amount, 0);
   };
+
+  if (loading) return <AppLayout><div className="max-w-4xl mx-auto"><CardsSkeleton /></div></AppLayout>;
 
   return (
     <AppLayout>
@@ -124,7 +128,12 @@ const CategoriesPage = () => {
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}><Pencil className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={async () => { await deleteCategory(cat.id); toast.success("Categoria removida"); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                        <DeleteConfirmDialog
+                          title="Excluir categoria"
+                          description={`Deseja excluir a categoria "${cat.name}"? As transações associadas perderão a categoria.`}
+                          onConfirm={async () => { await deleteCategory(cat.id); toast.success("Categoria removida"); }}
+                          iconClassName="w-4 h-4 text-destructive"
+                        />
                       </div>
                     </div>
                     {cat.limit > 0 && (

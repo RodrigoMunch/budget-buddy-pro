@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useFinance } from "@/contexts/FinanceContext";
+import { ListSkeleton } from "@/components/PageSkeleton";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +14,7 @@ import { format, addMonths, startOfMonth, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const InstallmentsPage = () => {
-  const { transactions, categories } = useFinance();
+  const { transactions, categories, loading } = useFinance();
   const { isPremiumActive, activeInstallmentsCount, FREE_LIMITS } = usePermissions();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
@@ -55,6 +56,8 @@ const InstallmentsPage = () => {
   });
 
   const activeCount = activeInstallmentsCount();
+
+  if (loading) return <AppLayout><ListSkeleton /></AppLayout>;
 
   return (
     <AppLayout>

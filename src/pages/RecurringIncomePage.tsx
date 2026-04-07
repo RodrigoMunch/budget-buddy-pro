@@ -10,13 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
-import { RefreshCw, CalendarRange, TrendingUp, Trash2, Pencil, DollarSign } from "lucide-react";
+import { RefreshCw, CalendarRange, TrendingUp, Pencil, DollarSign } from "lucide-react";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
+import { ListSkeleton } from "@/components/PageSkeleton";
 import { format, addMonths, startOfMonth, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 
 const RecurringIncomePage = () => {
-  const { transactions, refresh } = useFinance();
+  const { transactions, refresh, loading } = useFinance();
   const [editOpen, setEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
@@ -85,6 +87,8 @@ const RecurringIncomePage = () => {
       await refresh();
     }
   };
+
+  if (loading) return <AppLayout><ListSkeleton /></AppLayout>;
 
   return (
     <AppLayout>
@@ -191,14 +195,11 @@ const RecurringIncomePage = () => {
                           >
                             <Pencil className="w-3.5 h-3.5 text-primary" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="opacity-0 group-hover:opacity-100 h-8 w-8"
-                            onClick={() => handleDelete(t.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                          </Button>
+                          <DeleteConfirmDialog
+                            title="Excluir entrada recorrente"
+                            description={`Deseja excluir "${t.description}"? Esta ação não pode ser desfeita.`}
+                            onConfirm={() => handleDelete(t.id)}
+                          />
                         </div>
                       </div>
                     ))}
