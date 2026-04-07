@@ -61,6 +61,21 @@ const DashboardPage = () => {
       .reduce((acc, t) => acc + (t.type === "income" ? t.amount : -t.amount), 0);
   }, [transactions]);
 
+  // Previous month transactions for comparison
+  const prevMonthTransactions = useMemo(() => {
+    const prev = subMonths(now, 1);
+    return transactions.filter((t) => {
+      const d = new Date(t.date);
+      return d.getMonth() === prev.getMonth() && d.getFullYear() === prev.getFullYear();
+    });
+  }, [transactions]);
+
+  const prevIncome = prevMonthTransactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const prevExpense = prevMonthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+
+  const expensePctChange = prevExpense > 0 ? Math.round(((totalExpense - prevExpense) / prevExpense) * 100) : null;
+  const incomePctChange = prevIncome > 0 ? Math.round(((totalIncome - prevIncome) / prevIncome) * 100) : null;
+
   const totalLimit = activeProfile?.total_limit || 0;
   const limitPct = totalLimit ? Math.min((totalExpense / totalLimit) * 100, 100) : 0;
 
@@ -257,7 +272,24 @@ const DashboardPage = () => {
           ))}
         </div>
 
-        {/* Charts section */}
+        {/* Month comparison */}
+        {(expensePctChange !== null || incomePctChange !== null) && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
+            className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground px-1">
+            <span>Comparado ao mês anterior:</span>
+            {expensePctChange !== null && (
+              <span className={expensePctChange > 0 ? "text-destructive font-medium" : "text-success font-medium"}>
+                despesas {expensePctChange > 0 ? "+" : ""}{expensePctChange}%
+              </span>
+            )}
+            {incomePctChange !== null && (
+              <span className={incomePctChange >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
+                entradas {incomePctChange > 0 ? "+" : ""}{incomePctChange}%
+              </span>
+            )}
+          </motion.div>
+        )}
+
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <Card className="h-full">
