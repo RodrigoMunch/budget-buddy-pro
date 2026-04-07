@@ -11,7 +11,9 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import UpgradeModal from "@/components/UpgradeModal";
-import { History, CalendarIcon, Filter, Trash2, X, Crown, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { History, CalendarIcon, Filter, X, Crown, Download, FileText, FileSpreadsheet } from "lucide-react";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
+import { ListSkeleton } from "@/components/PageSkeleton";
 import { exportToPDF, exportToCSV } from "@/utils/exportData";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, subDays, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
@@ -29,7 +31,7 @@ const presets: { key: PresetKey; label: string; premium?: boolean }[] = [
 ];
 
 const HistoryPage = () => {
-  const { transactions, categories, deleteTransaction } = useFinance();
+  const { transactions, categories, deleteTransaction, loading } = useFinance();
   const { isPremiumActive, canViewHistory } = usePermissions();
   const [activePreset, setActivePreset] = useState<PresetKey>("30d");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -85,6 +87,8 @@ const HistoryPage = () => {
     setActivePreset(key);
     if (key !== "custom") setDateRange(undefined);
   };
+
+  if (loading) return <AppLayout><ListSkeleton /></AppLayout>;
 
   return (
     <AppLayout>
@@ -201,8 +205,11 @@ const HistoryPage = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-destructive">- R$ {t.amount.toFixed(2)}</span>
-                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8"
-                        onClick={async () => { await deleteTransaction(t.id); toast.success("Despesa removida"); }}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
+                      <DeleteConfirmDialog
+                        title="Excluir despesa"
+                        description={`Deseja excluir "${t.description}"? ${t.parent_id ? "Todas as parcelas serão removidas." : "Esta ação não pode ser desfeita."}`}
+                        onConfirm={async () => { await deleteTransaction(t.id); toast.success("Despesa removida"); }}
+                      />
                     </div>
                   </div>
                 ))}

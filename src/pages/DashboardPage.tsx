@@ -16,7 +16,9 @@ import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import PremiumGate from "@/components/PremiumGate";
 import UpgradeModal from "@/components/UpgradeModal";
-import { Plus, TrendingUp, TrendingDown, Wallet, Target, Trash2, CalendarIcon, Crown } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Wallet, Target, CalendarIcon, Crown } from "lucide-react";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
+import { DashboardSkeleton } from "@/components/PageSkeleton";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
@@ -28,7 +30,7 @@ const CHART_COLORS = [
 
 const DashboardPage = () => {
   const { activeProfile } = useAuth();
-  const { categories, transactions, addTransaction, deleteTransaction } = useFinance();
+  const { categories, transactions, addTransaction, deleteTransaction, loading } = useFinance();
   const { canViewBarChart, isPremiumActive } = usePermissions();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"expense" | "income">("expense");
@@ -123,6 +125,8 @@ const DashboardPage = () => {
       </div>
     );
   };
+
+  if (loading) return <AppLayout><DashboardSkeleton /></AppLayout>;
 
   return (
     <AppLayout>
@@ -314,10 +318,11 @@ const DashboardPage = () => {
                         <span className={`font-semibold text-sm whitespace-nowrap ${t.type === "income" ? "text-success" : "text-destructive"}`}>
                           {t.type === "income" ? "+" : "-"} R$ {t.amount.toFixed(2)}
                         </span>
-                        <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8"
-                          onClick={async () => { await deleteTransaction(t.id); toast.success("Transação removida"); }}>
-                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                        </Button>
+                        <DeleteConfirmDialog
+                          title="Excluir transação"
+                          description={`Deseja excluir "${t.description}"? ${t.parent_id ? "Todas as parcelas serão removidas." : "Esta ação não pode ser desfeita."}`}
+                          onConfirm={async () => { await deleteTransaction(t.id); toast.success("Transação removida"); }}
+                        />
                       </div>
                     </div>
                   ))}
