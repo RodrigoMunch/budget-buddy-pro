@@ -61,6 +61,21 @@ const DashboardPage = () => {
       .reduce((acc, t) => acc + (t.type === "income" ? t.amount : -t.amount), 0);
   }, [transactions]);
 
+  // Previous month transactions for comparison
+  const prevMonthTransactions = useMemo(() => {
+    const prev = subMonths(now, 1);
+    return transactions.filter((t) => {
+      const d = new Date(t.date);
+      return d.getMonth() === prev.getMonth() && d.getFullYear() === prev.getFullYear();
+    });
+  }, [transactions]);
+
+  const prevIncome = prevMonthTransactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const prevExpense = prevMonthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+
+  const expensePctChange = prevExpense > 0 ? Math.round(((totalExpense - prevExpense) / prevExpense) * 100) : null;
+  const incomePctChange = prevIncome > 0 ? Math.round(((totalIncome - prevIncome) / prevIncome) * 100) : null;
+
   const totalLimit = activeProfile?.total_limit || 0;
   const limitPct = totalLimit ? Math.min((totalExpense / totalLimit) * 100, 100) : 0;
 
