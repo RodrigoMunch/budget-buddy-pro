@@ -181,6 +181,27 @@ const DashboardPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
+                    {(() => {
+                      if (!categoryId || !amount) return null;
+                      const cat = categories.find((c) => c.id === categoryId);
+                      if (!cat || !cat.limit) return null;
+                      const currentSpent = monthTransactions
+                        .filter((t) => t.type === "expense" && t.category_id === categoryId)
+                        .reduce((s, t) => s + t.amount, 0);
+                      const newTotal = currentSpent + parseFloat(amount || "0");
+                      const pct = Math.round((newTotal / cat.limit) * 100);
+                      if (pct < 70) return null;
+                      return (
+                        <div className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${pct >= 100 ? "border-destructive/50 bg-destructive/10 text-destructive" : "border-warning/50 bg-warning/10 text-warning"}`}>
+                          <span>⚠️</span>
+                          <span>
+                            {pct >= 100
+                              ? `Você ultrapassará o limite de ${cat.name} (${pct}% do limite de R$ ${cat.limit.toFixed(2)})`
+                              : `Você usará ${pct}% do limite de ${cat.name} com esse lançamento`}
+                          </span>
+                        </div>
+                      );
+                    })()}
                     <div className="space-y-2">
                       <Label>Parcelas</Label>
                       <Input type="number" value={installments} onChange={(e) => setInstallments(e.target.value)} min="1" max="48" />
