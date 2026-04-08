@@ -20,10 +20,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 const RecurringIncomePage = () => {
   const { transactions, refresh, loading } = useFinance();
+  const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
   const [editAmount, setEditAmount] = useState("");
+  const [launching, setLaunching] = useState(false);
 
   const recurringIncomes = useMemo(
     () => transactions.filter((t) => t.type === "income" && t.is_recurring),
