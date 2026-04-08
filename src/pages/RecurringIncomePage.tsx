@@ -202,6 +202,49 @@ const RecurringIncomePage = () => {
               </Card>
             </motion.div>
 
+            {/* Launch button */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12 }}
+            >
+              <Card>
+                <CardContent className="p-3 sm:p-5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      {pendingThisMonth.length > 0 ? (
+                        <PlayCircle className="w-5 h-5 text-primary shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">
+                          {pendingThisMonth.length > 0
+                            ? `${pendingThisMonth.length} entrada(s) pendente(s) para ${format(now, "MMMM/yyyy", { locale: ptBR })}`
+                            : `Todas as entradas já foram lançadas em ${format(now, "MMMM/yyyy", { locale: ptBR })}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {pendingThisMonth.length > 0
+                            ? "Clique para gerar as transações deste mês"
+                            : "Nenhuma ação necessária"}
+                        </p>
+                      </div>
+                    </div>
+                    {pendingThisMonth.length > 0 && (
+                      <Button
+                        onClick={handleLaunchAll}
+                        disabled={launching}
+                        className="bg-success hover:bg-success/90 shrink-0"
+                      >
+                        <PlayCircle className="w-4 h-4 mr-1" />
+                        {launching ? "Lançando..." : "Relançar este mês"}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
             {/* List of recurring incomes */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
