@@ -43,6 +43,50 @@ const RecurringIncomePage = () => {
     return result;
   }, []);
 
+  // Check which recurring incomes already have a transaction this month
+  const pendingThisMonth = useMemo(() => {
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    return recurringIncomes.filter((ri) => {
+      // Check if a non-recurring income with same description exists this month
+      const alreadyLaunched = transactions.some(
+        (t) =>
+          t.type === "income" &&
+          !t.is_recurring &&
+          t.description === ri.description &&
+          new Date(t.date).getMonth() === currentMonth &&
+          new Date(t.date).getFullYear() === currentYear
+      );
+      return !alreadyLaunched;
+    });
+  }, [recurringIncomes, transactions]);
+
+  const handleLaunchAll = async () => {
+    if (!user?.id || pendingThisMonth.length === 0) return;
+    setLaunching(true);
+    try {
+      const today = now.toISOString().split("T")[0];
+      const rows = pendingThisMonth.map((ri) => ({
+        user_id: user.id,
+        type: "income" as const,
+        description: ri.description,
+        amount: ri.amount,
+        date: today,
+        category_id: ri.category_id || null,
+        is_recurring: false,
+      }));
+      const { error } = await supabase.from("transactions").insert(rows);
+      if (error) {
+        toast.error("Erro ao relançar entradas");
+      } else {
+        toast.success(`${rows.length} entrada(s) lançada(s) para este mês!`);
+        await refresh();
+      }
+    } finally {
+      setLaunching(false);
+    }
+  };
+
   const totalMonthly = recurringIncomes.reduce((sum, t) => sum + t.amount, 0);
 
   const monthlyProjection = useMemo(() => {
