@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useFinance } from "@/contexts/FinanceContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
-import { RefreshCw, CalendarRange, TrendingUp, Pencil, DollarSign } from "lucide-react";
+import { RefreshCw, CalendarRange, TrendingUp, Pencil, DollarSign, PlayCircle, CheckCircle2 } from "lucide-react";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import { ListSkeleton } from "@/components/PageSkeleton";
 import { format, addMonths, startOfMonth, isSameMonth } from "date-fns";
