@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useFinance } from "@/contexts/FinanceContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
-import { RefreshCw, CalendarRange, TrendingUp, Pencil, DollarSign } from "lucide-react";
+import { RefreshCw, CalendarRange, TrendingUp, Pencil, DollarSign, PlayCircle, CheckCircle2 } from "lucide-react";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import { ListSkeleton } from "@/components/PageSkeleton";
 import { format, addMonths, startOfMonth, isSameMonth } from "date-fns";
@@ -19,10 +20,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 const RecurringIncomePage = () => {
   const { transactions, refresh, loading } = useFinance();
+  const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
   const [editAmount, setEditAmount] = useState("");
+  const [launching, setLaunching] = useState(false);
 
   const recurringIncomes = useMemo(
     () => transactions.filter((t) => t.type === "income" && t.is_recurring),
@@ -39,6 +42,50 @@ const RecurringIncomePage = () => {
     }
     return result;
   }, []);
+
+  // Check which recurring incomes already have a transaction this month
+  const pendingThisMonth = useMemo(() => {
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    return recurringIncomes.filter((ri) => {
+      // Check if a non-recurring income with same description exists this month
+      const alreadyLaunched = transactions.some(
+        (t) =>
+          t.type === "income" &&
+          !t.is_recurring &&
+          t.description === ri.description &&
+          new Date(t.date).getMonth() === currentMonth &&
+          new Date(t.date).getFullYear() === currentYear
+      );
+      return !alreadyLaunched;
+    });
+  }, [recurringIncomes, transactions]);
+
+  const handleLaunchAll = async () => {
+    if (!user?.id || pendingThisMonth.length === 0) return;
+    setLaunching(true);
+    try {
+      const today = now.toISOString().split("T")[0];
+      const rows = pendingThisMonth.map((ri) => ({
+        user_id: user.id,
+        type: "income" as const,
+        description: ri.description,
+        amount: ri.amount,
+        date: today,
+        category_id: ri.category_id || null,
+        is_recurring: false,
+      }));
+      const { error } = await supabase.from("transactions").insert(rows);
+      if (error) {
+        toast.error("Erro ao relançar entradas");
+      } else {
+        toast.success(`${rows.length} entrada(s) lançada(s) para este mês!`);
+        await refresh();
+      }
+    } finally {
+      setLaunching(false);
+    }
+  };
 
   const totalMonthly = recurringIncomes.reduce((sum, t) => sum + t.amount, 0);
 
@@ -151,6 +198,49 @@ const RecurringIncomePage = () => {
                   <p className="text-lg sm:text-2xl font-bold text-success">
                     R$ {monthlyProjection.reduce((a, b) => a + b, 0).toFixed(2)}
                   </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Launch button */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12 }}
+            >
+              <Card>
+                <CardContent className="p-3 sm:p-5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      {pendingThisMonth.length > 0 ? (
+                        <PlayCircle className="w-5 h-5 text-primary shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">
+                          {pendingThisMonth.length > 0
+                            ? `${pendingThisMonth.length} entrada(s) pendente(s) para ${format(now, "MMMM/yyyy", { locale: ptBR })}`
+                            : `Todas as entradas já foram lançadas em ${format(now, "MMMM/yyyy", { locale: ptBR })}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {pendingThisMonth.length > 0
+                            ? "Clique para gerar as transações deste mês"
+                            : "Nenhuma ação necessária"}
+                        </p>
+                      </div>
+                    </div>
+                    {pendingThisMonth.length > 0 && (
+                      <Button
+                        onClick={handleLaunchAll}
+                        disabled={launching}
+                        className="bg-success hover:bg-success/90 shrink-0"
+                      >
+                        <PlayCircle className="w-4 h-4 mr-1" />
+                        {launching ? "Lançando..." : "Relançar este mês"}
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
