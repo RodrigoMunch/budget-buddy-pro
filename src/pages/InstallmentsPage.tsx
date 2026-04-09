@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import AppLayout from "@/components/AppLayout";
 import UpgradeModal from "@/components/UpgradeModal";
-import { CreditCard, CalendarRange, Crown } from "lucide-react";
+import { CreditCard, CalendarRange, Crown, Plus } from "lucide-react";
 import { format, addMonths, startOfMonth, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
