@@ -49,6 +49,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          onboarding_completed: boolean
           plan: string
           plan_expires_at: string | null
           plan_started_at: string | null
@@ -61,6 +62,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          onboarding_completed?: boolean
           plan?: string
           plan_expires_at?: string | null
           plan_started_at?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          onboarding_completed?: boolean
           plan?: string
           plan_expires_at?: string | null
           plan_started_at?: string | null

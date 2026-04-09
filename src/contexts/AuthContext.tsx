@@ -11,6 +11,7 @@ interface Profile {
   plan_expires_at: string | null;
   trial_used: boolean;
   plan_started_at: string | null;
+  onboarding_completed: boolean;
 }
 
 interface SubscriptionInfo {

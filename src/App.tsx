@@ -14,14 +14,25 @@ import ProfilePage from "./pages/ProfilePage";
 import InstallmentsPage from "./pages/InstallmentsPage";
 import HistoryPage from "./pages/HistoryPage";
 import RecurringIncomePage from "./pages/RecurringIncomePage";
+import OnboardingPage from "./pages/OnboardingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center gradient-dark"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
-  return user ? <>{children}</> : <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (profile && !profile.onboarding_completed) return <Navigate to="/onboarding" replace />;
+  return <>{children}</>;
+};
+
+const OnboardingRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, profile, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (profile?.onboarding_completed) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
 };
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
@@ -34,6 +45,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
     <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
+    <Route path="/onboarding" element={<OnboardingRoute><OnboardingPage /></OnboardingRoute>} />
     <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
     <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
     <Route path="/installments" element={<ProtectedRoute><InstallmentsPage /></ProtectedRoute>} />
