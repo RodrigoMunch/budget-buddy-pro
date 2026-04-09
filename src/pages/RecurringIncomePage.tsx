@@ -156,13 +156,14 @@ const RecurringIncomePage = () => {
 
         {recurringIncomes.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <Card>
-              <CardContent className="py-16 text-center">
-                <RefreshCw className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-muted-foreground">Nenhuma entrada recorrente encontrada</p>
-                <p className="text-sm text-muted-foreground/60 mt-1">
-                  Registre uma entrada com a opção "Recorrente" no Dashboard
-                </p>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+                <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <RefreshCw className="w-10 h-10 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-1">Nenhuma entrada recorrente ainda</h3>
+                <p className="text-sm text-muted-foreground mb-6 text-center max-w-xs">Registre uma entrada com a opção "Recorrente" no Dashboard para acompanhar aqui</p>
+                <Button onClick={() => window.location.href = '/dashboard'} className="gradient-primary hover:opacity-90">Ir para o Dashboard</Button>
               </CardContent>
             </Card>
           </motion.div>

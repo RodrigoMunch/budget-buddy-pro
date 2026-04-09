@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import AppLayout from "@/components/AppLayout";
 import UpgradeModal from "@/components/UpgradeModal";
-import { CreditCard, CalendarRange, Crown } from "lucide-react";
+import { CreditCard, CalendarRange, Crown, Plus } from "lucide-react";
 import { format, addMonths, startOfMonth, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -86,8 +86,17 @@ const InstallmentsPage = () => {
         )}
 
         {groupEntries.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <Card><CardContent className="py-16 text-center"><CreditCard className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" /><p className="text-muted-foreground">Nenhum parcelamento encontrado</p><p className="text-sm text-muted-foreground/60 mt-1">Registre uma despesa parcelada no Dashboard</p></CardContent></Card>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+                <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <CreditCard className="w-10 h-10 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-1">Nenhum parcelamento ainda</h3>
+                <p className="text-sm text-muted-foreground mb-6 text-center max-w-xs">Registre uma despesa parcelada no Dashboard para acompanhar suas parcelas aqui</p>
+                <Button onClick={() => window.location.href = '/dashboard'} className="gradient-primary hover:opacity-90"><Plus className="w-4 h-4 mr-2" />Ir para o Dashboard</Button>
+              </CardContent>
+            </Card>
           </motion.div>
         ) : (
           <>

@@ -149,9 +149,18 @@ const CategoriesPage = () => {
             );
           })}
           {categories.length === 0 && (
-            <div className="col-span-full text-center py-12 text-muted-foreground">
-              <Tags className="w-12 h-12 mx-auto mb-3 opacity-40" /><p>Nenhuma categoria criada ainda</p><p className="text-sm">Clique em "Nova Categoria" para começar</p>
-            </div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="col-span-full">
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                    <Tags className="w-10 h-10 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-1">Nenhuma categoria ainda</h3>
+                  <p className="text-sm text-muted-foreground mb-6 text-center max-w-xs">Crie categorias para organizar seus gastos e definir limites mensais</p>
+                  <Button onClick={openNew} className="gradient-primary hover:opacity-90"><Plus className="w-4 h-4 mr-2" />Criar primeira categoria</Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
         </div>
 

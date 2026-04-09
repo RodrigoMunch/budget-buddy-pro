@@ -214,7 +214,14 @@ const HistoryPage = () => {
                   </div>
                 ))}
                 {filteredTransactions.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground"><History className="w-10 h-10 mx-auto mb-2 opacity-40" /><p>Nenhuma despesa encontrada</p><p className="text-sm text-muted-foreground/60 mt-1">Ajuste os filtros ou registre novas despesas</p></div>
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 px-6">
+                    <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                      <History className="w-10 h-10 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-1">Nenhuma transação encontrada</h3>
+                    <p className="text-sm text-muted-foreground mb-6 text-center max-w-xs">Ajuste os filtros ou registre novas transações no Dashboard</p>
+                    <Button onClick={() => window.location.href = '/dashboard'} className="gradient-primary hover:opacity-90">Ir para o Dashboard</Button>
+                  </motion.div>
                 )}
               </div>
             </CardContent>
