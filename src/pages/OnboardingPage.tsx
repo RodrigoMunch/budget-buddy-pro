@@ -85,6 +85,9 @@ const OnboardingPage = () => {
         .update({ onboarding_completed: true } as any)
         .eq("user_id", user.id);
 
+      // 4. Refresh profile in context so ProtectedRoute doesn't redirect back
+      await refreshProfile();
+
       toast.success("Tudo pronto! Bem-vindo ao FinControl 🎉");
       navigate("/dashboard", { replace: true });
     } catch {
