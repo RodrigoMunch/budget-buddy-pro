@@ -32,7 +32,7 @@ const GOALS = [
 ];
 
 const OnboardingPage = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, refreshProfile } = useAuth();
   const { addCategory } = useFinance();
   const navigate = useNavigate();
 
@@ -84,6 +84,9 @@ const OnboardingPage = () => {
         .from("profiles")
         .update({ onboarding_completed: true } as any)
         .eq("user_id", user.id);
+
+      // 4. Refresh profile in context so ProtectedRoute doesn't redirect back
+      await refreshProfile();
 
       toast.success("Tudo pronto! Bem-vindo ao FinControl 🎉");
       navigate("/dashboard", { replace: true });
