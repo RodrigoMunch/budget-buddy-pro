@@ -195,6 +195,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const stopImpersonating = () => setImpersonating(null);
 
+  const refreshProfile = async () => {
+    if (user?.id) await fetchProfile(user.id);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -202,7 +206,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         impersonating, activeProfile, activeUserId,
         subscription, checkSubscription,
         login, register, logout,
-        updateProfile, impersonateUser, stopImpersonating,
+        updateProfile, refreshProfile, impersonateUser, stopImpersonating,
       }}
     >
       {children}

@@ -32,7 +32,7 @@ const GOALS = [
 ];
 
 const OnboardingPage = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, refreshProfile } = useAuth();
   const { addCategory } = useFinance();
   const navigate = useNavigate();
 
