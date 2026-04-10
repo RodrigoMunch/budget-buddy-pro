@@ -126,13 +126,16 @@ const CategoriesPage = () => {
                           {cat.limit > 0 && <p className="text-sm text-muted-foreground">R$ {spent.toFixed(2)} / R$ {cat.limit.toFixed(2)}</p>}
                         </div>
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}><Pencil className="w-4 h-4" /></Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openEdit(cat)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
                         <DeleteConfirmDialog
                           title="Excluir categoria"
                           description={`Deseja excluir a categoria "${cat.name}"? As transações associadas perderão a categoria.`}
                           onConfirm={async () => { await deleteCategory(cat.id); toast.success("Categoria removida"); }}
-                          iconClassName="w-4 h-4 text-destructive"
+                          triggerClassName="opacity-0 group-hover:opacity-100 h-8 w-8"
+                          iconClassName="w-3.5 h-3.5 text-destructive"
                         />
                       </div>
                     </div>
