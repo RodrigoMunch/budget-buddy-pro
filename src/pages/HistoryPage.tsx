@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import UpgradeModal from "@/components/UpgradeModal";
-import { History, CalendarIcon, Filter, X, Crown, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { History, CalendarIcon, Filter, X, Crown, Download, FileText, FileSpreadsheet, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import { ListSkeleton } from "@/components/PageSkeleton";
 import { exportToPDF, exportToCSV } from "@/utils/exportData";
@@ -21,6 +21,7 @@ import { ptBR } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
 type PresetKey = "7d" | "14d" | "30d" | "future" | "custom";
+type TypeFilter = "all" | "expense" | "income";
 
 const presets: { key: PresetKey; label: string; premium?: boolean }[] = [
   { key: "7d", label: "Últimos 7 dias" },
@@ -36,6 +37,7 @@ const HistoryPage = () => {
   const [activePreset, setActivePreset] = useState<PresetKey>("30d");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
@@ -56,7 +58,9 @@ const HistoryPage = () => {
     const now = new Date();
     return transactions
       .filter((t) => {
-        if (t.type !== "expense") return false;
+        // Type filter
+        if (typeFilter !== "all" && t.type !== typeFilter) return false;
+
         const d = new Date(t.date);
 
         // Free plan: only current month
@@ -72,9 +76,10 @@ const HistoryPage = () => {
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, activePreset, dateRange, categoryFilter, isPremiumActive]);
+  }, [transactions, activePreset, dateRange, categoryFilter, typeFilter, isPremiumActive]);
 
-  const totalFiltered = filteredTransactions.reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = filteredTransactions.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  const totalIncome = filteredTransactions.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const getCategoryName = (id?: string | null) => categories.find((c) => c.id === id)?.name || "Sem categoria";
   const getCategoryIcon = (id?: string | null) => categories.find((c) => c.id === id)?.icon || "💰";
   const getCategoryColor = (id?: string | null) => categories.find((c) => c.id === id)?.color || "#6c5ce7";
@@ -88,6 +93,9 @@ const HistoryPage = () => {
     if (key !== "custom") setDateRange(undefined);
   };
 
+  const exportTitle = typeFilter === "income" ? "Histórico de Entradas" : typeFilter === "expense" ? "Histórico de Despesas" : "Histórico de Transações";
+  const exportFileName = typeFilter === "income" ? "historico_entradas" : typeFilter === "expense" ? "historico_despesas" : "historico_transacoes";
+
   if (loading) return <AppLayout><ListSkeleton /></AppLayout>;
 
   return (
@@ -98,9 +106,9 @@ const HistoryPage = () => {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center"><History className="w-5 h-5 text-primary-foreground" /></div>
               <div>
-                <h1 className="text-3xl font-bold">Histórico de Despesas</h1>
+                <h1 className="text-3xl font-bold">Histórico</h1>
                 <p className="text-muted-foreground text-sm">
-                  {isPremiumActive ? "Filtre e analise suas despesas" : "Histórico do mês atual (Premium para histórico completo)"}
+                  {isPremiumActive ? "Filtre e analise suas transações" : "Histórico do mês atual (Premium para histórico completo)"}
                 </p>
               </div>
             </div>
@@ -112,10 +120,10 @@ const HistoryPage = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { exportToPDF({ transactions: filteredTransactions, categories, title: "Histórico de Despesas" }); toast.success("PDF exportado!"); }}>
+                  <DropdownMenuItem onClick={() => { exportToPDF({ transactions: filteredTransactions, categories, title: exportTitle }); toast.success("PDF exportado!"); }}>
                     <FileText className="w-4 h-4 mr-2" /> Exportar PDF
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { exportToCSV({ transactions: filteredTransactions, categories, title: "historico_despesas" }); toast.success("CSV exportado!"); }}>
+                  <DropdownMenuItem onClick={() => { exportToCSV({ transactions: filteredTransactions, categories, title: exportFileName }); toast.success("CSV exportado!"); }}>
                     <FileSpreadsheet className="w-4 h-4 mr-2" /> Exportar CSV
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -142,6 +150,27 @@ const HistoryPage = () => {
           <Card>
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center gap-2 mb-2"><Filter className="w-4 h-4 text-muted-foreground" /><span className="text-sm font-medium text-muted-foreground">Filtros</span></div>
+              
+              {/* Type filter */}
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant={typeFilter === "all" ? "default" : "outline"}
+                  className={typeFilter === "all" ? "gradient-primary text-primary-foreground" : ""}
+                  onClick={() => setTypeFilter("all")}>
+                  Todas
+                </Button>
+                <Button size="sm" variant={typeFilter === "expense" ? "default" : "outline"}
+                  className={typeFilter === "expense" ? "gradient-primary text-primary-foreground" : ""}
+                  onClick={() => setTypeFilter("expense")}>
+                  <ArrowDownCircle className="w-3.5 h-3.5 mr-1" /> Despesas
+                </Button>
+                <Button size="sm" variant={typeFilter === "income" ? "default" : "outline"}
+                  className={typeFilter === "income" ? "gradient-primary text-primary-foreground" : ""}
+                  onClick={() => setTypeFilter("income")}>
+                  <ArrowUpCircle className="w-3.5 h-3.5 mr-1" /> Entradas
+                </Button>
+              </div>
+
+              {/* Date presets */}
               <div className="flex flex-wrap gap-2">
                 {presets.map((p) => (
                   <Button key={p.key} size="sm" variant={activePreset === p.key ? "default" : "outline"}
@@ -180,39 +209,52 @@ const HistoryPage = () => {
           </Card>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid gap-4 md:grid-cols-2">
-          <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Despesas encontradas</p><p className="text-2xl font-bold">{filteredTransactions.length}</p></CardContent></Card>
-          <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Total no período</p><p className="text-2xl font-bold text-destructive">R$ {totalFiltered.toFixed(2)}</p></CardContent></Card>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid gap-4 md:grid-cols-3">
+          <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Transações encontradas</p><p className="text-2xl font-bold">{filteredTransactions.length}</p></CardContent></Card>
+          <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Total em despesas</p><p className="text-2xl font-bold text-destructive">R$ {totalExpenses.toFixed(2)}</p></CardContent></Card>
+          <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground mb-1">Total em entradas</p><p className="text-2xl font-bold text-emerald-500">R$ {totalIncome.toFixed(2)}</p></CardContent></Card>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card>
-            <CardHeader><CardTitle className="text-lg">Despesas</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg">Transações</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {filteredTransactions.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg" style={{ backgroundColor: getCategoryColor(t.category_id) + "22" }}>{getCategoryIcon(t.category_id)}</div>
-                      <div>
-                        <p className="font-medium text-sm">{t.description}</p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs text-muted-foreground">{format(new Date(t.date), "dd/MM/yyyy")}</span>
-                          {t.current_installment && <Badge variant="outline" className="text-xs py-0 h-5">{t.current_installment}/{t.installments}x</Badge>}
-                          <Badge variant="secondary" className="text-xs py-0 h-5">{getCategoryName(t.category_id)}</Badge>
+                {filteredTransactions.map((t) => {
+                  const isIncome = t.type === "income";
+                  return (
+                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg" style={{ backgroundColor: isIncome ? "#10b98122" : getCategoryColor(t.category_id) + "22" }}>
+                          {isIncome ? "💵" : getCategoryIcon(t.category_id)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{t.description}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs text-muted-foreground">{format(new Date(t.date), "dd/MM/yyyy")}</span>
+                            {t.current_installment && <Badge variant="outline" className="text-xs py-0 h-5">{t.current_installment}/{t.installments}x</Badge>}
+                            {isIncome ? (
+                              <Badge variant="secondary" className="text-xs py-0 h-5 bg-emerald-500/10 text-emerald-600">Entrada</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs py-0 h-5">{getCategoryName(t.category_id)}</Badge>
+                            )}
+                            {t.is_recurring && <Badge variant="outline" className="text-xs py-0 h-5">Recorrente</Badge>}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-semibold ${isIncome ? "text-emerald-500" : "text-destructive"}`}>
+                          {isIncome ? "+" : "-"} R$ {t.amount.toFixed(2)}
+                        </span>
+                        <DeleteConfirmDialog
+                          title={isIncome ? "Excluir entrada" : "Excluir despesa"}
+                          description={`Deseja excluir "${t.description}"? ${t.parent_id ? "Todas as parcelas serão removidas." : "Esta ação não pode ser desfeita."}`}
+                          onConfirm={async () => { await deleteTransaction(t.id); toast.success(isIncome ? "Entrada removida" : "Despesa removida"); }}
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-destructive">- R$ {t.amount.toFixed(2)}</span>
-                      <DeleteConfirmDialog
-                        title="Excluir despesa"
-                        description={`Deseja excluir "${t.description}"? ${t.parent_id ? "Todas as parcelas serão removidas." : "Esta ação não pode ser desfeita."}`}
-                        onConfirm={async () => { await deleteTransaction(t.id); toast.success("Despesa removida"); }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {filteredTransactions.length === 0 && (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 px-6">
                     <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
