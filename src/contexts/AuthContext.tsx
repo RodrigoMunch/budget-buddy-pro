@@ -32,6 +32,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   impersonateUser: (email: string) => Promise<{ error?: string }>;
   stopImpersonating: () => void;
   checkSubscription: () => Promise<void>;
