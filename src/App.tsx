@@ -14,6 +14,7 @@ import ProfilePage from "./pages/ProfilePage";
 import InstallmentsPage from "./pages/InstallmentsPage";
 import HistoryPage from "./pages/HistoryPage";
 import RecurringIncomePage from "./pages/RecurringIncomePage";
+import InvestmentsPage from "./pages/InvestmentsPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import NotFound from "./pages/NotFound";
 
@@ -51,6 +52,7 @@ const AppRoutes = () => (
     <Route path="/installments" element={<ProtectedRoute><InstallmentsPage /></ProtectedRoute>} />
     <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
     <Route path="/recurring" element={<ProtectedRoute><RecurringIncomePage /></ProtectedRoute>} />
+    <Route path="/investments" element={<ProtectedRoute><InvestmentsPage /></ProtectedRoute>} />
     <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>

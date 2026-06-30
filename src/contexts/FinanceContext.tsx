@@ -23,17 +23,33 @@ export interface Transaction {
   current_installment?: number | null;
   parent_id?: string | null;
   is_recurring?: boolean;
+  investment_wallet_id?: string | null;
+}
+
+export interface InvestmentWallet {
+  id: string;
+  user_id: string;
+  name: string;
+  type: string;
+  color: string;
+  icon: string;
 }
 
 interface FinanceContextType {
   categories: Category[];
   transactions: Transaction[];
+  wallets: InvestmentWallet[];
   loading: boolean;
   addCategory: (cat: Omit<Category, "id" | "user_id">) => Promise<void>;
   updateCategory: (id: string, cat: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   addTransaction: (t: Omit<Transaction, "id" | "user_id">) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  addWallet: (w: Omit<InvestmentWallet, "id" | "user_id">) => Promise<void>;
+  updateWallet: (id: string, w: Partial<InvestmentWallet>) => Promise<void>;
+  deleteWallet: (id: string) => Promise<void>;
+  addContribution: (walletId: string, amount: number, date: string, description?: string) => Promise<void>;
+  addWithdrawal: (walletId: string, amount: number, date: string, description?: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -49,18 +65,21 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const { activeUserId, user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [wallets, setWallets] = useState<InvestmentWallet[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!activeUserId) {
       setCategories([]);
       setTransactions([]);
+      setWallets([]);
       return;
     }
     setLoading(true);
-    const [catRes, txRes] = await Promise.all([
+    const [catRes, txRes, walletRes] = await Promise.all([
       supabase.from("categories").select("*").eq("user_id", activeUserId),
       supabase.from("transactions").select("*").eq("user_id", activeUserId),
+      supabase.from("investment_wallets").select("*").eq("user_id", activeUserId),
     ]);
     if (catRes.data) setCategories(catRes.data.map((c: any) => ({ ...c, limit: Number(c.limit) })));
     if (txRes.data) setTransactions(txRes.data.map((t: any) => ({
@@ -68,6 +87,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       amount: Number(t.amount),
       type: t.type as "expense" | "income",
     })));
+    if (walletRes.data) setWallets(walletRes.data as InvestmentWallet[]);
     setLoading(false);
   }, [activeUserId]);
 
@@ -153,11 +173,73 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     await fetchData();
   };
 
+  const addWallet = async (w: Omit<InvestmentWallet, "id" | "user_id">) => {
+    if (!user?.id) return;
+    await supabase.from("investment_wallets").insert({
+      user_id: user.id,
+      name: w.name,
+      type: w.type,
+      color: w.color,
+      icon: w.icon,
+    });
+    await fetchData();
+  };
+
+  const updateWallet = async (id: string, w: Partial<InvestmentWallet>) => {
+    await supabase.from("investment_wallets").update({
+      name: w.name,
+      type: w.type,
+      color: w.color,
+      icon: w.icon,
+    }).eq("id", id);
+    await fetchData();
+  };
+
+  const deleteWallet = async (id: string) => {
+    await supabase.from("investment_wallets").delete().eq("id", id);
+    await fetchData();
+  };
+
+  const addContribution = async (walletId: string, amount: number, date: string, description?: string) => {
+    if (!user?.id) return;
+    const wallet = wallets.find((w) => w.id === walletId);
+    await supabase.from("transactions").insert({
+      user_id: user.id,
+      type: "expense",
+      description: description?.trim() || `Aporte - ${wallet?.name || "Investimento"}`,
+      amount,
+      date,
+      category_id: null,
+      investment_wallet_id: walletId,
+      is_recurring: false,
+    });
+    await fetchData();
+  };
+
+  const addWithdrawal = async (walletId: string, amount: number, date: string, description?: string) => {
+    if (!user?.id) return;
+    const wallet = wallets.find((w) => w.id === walletId);
+    await supabase.from("transactions").insert({
+      user_id: user.id,
+      type: "income",
+      description: description?.trim() || `Resgate - ${wallet?.name || "Investimento"}`,
+      amount,
+      date,
+      category_id: null,
+      investment_wallet_id: walletId,
+      is_recurring: false,
+    });
+    await fetchData();
+  };
+
   return (
     <FinanceContext.Provider value={{
-      categories, transactions, loading,
+      categories, transactions, wallets, loading,
       addCategory, updateCategory, deleteCategory,
-      addTransaction, deleteTransaction, refresh: fetchData,
+      addTransaction, deleteTransaction,
+      addWallet, updateWallet, deleteWallet,
+      addContribution, addWithdrawal,
+      refresh: fetchData,
     }}>
       {children}
     </FinanceContext.Provider>
