@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { LayoutDashboard, Tags, User, LogOut, DollarSign, CreditCard, History, Shield, Menu, X, Crown, RefreshCw } from "lucide-react";
+import { LayoutDashboard, Tags, User, LogOut, DollarSign, CreditCard, History, Shield, Menu, X, Crown, RefreshCw, PiggyBank } from "lucide-react";
 import PremiumBadge from "./PremiumBadge";
 import ThemeToggle from "./ThemeToggle";
 
@@ -10,6 +10,7 @@ const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, premium: false },
   { to: "/installments", label: "Parcelamentos", icon: CreditCard, premium: false },
   { to: "/recurring", label: "Recorrentes", icon: RefreshCw, premium: false },
+  { to: "/investments", label: "Investimentos", icon: PiggyBank, premium: false },
   { to: "/history", label: "Histórico", icon: History, premium: false },
   { to: "/categories", label: "Categorias", icon: Tags, premium: false },
   { to: "/profile", label: "Perfil", icon: User, premium: false },
