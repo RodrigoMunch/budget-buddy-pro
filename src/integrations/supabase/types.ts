@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_wallets: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          name: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          name: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -96,6 +129,7 @@ export type Database = {
           description: string
           id: string
           installments: number | null
+          investment_wallet_id: string | null
           is_recurring: boolean
           parent_id: string | null
           type: string
@@ -110,6 +144,7 @@ export type Database = {
           description: string
           id?: string
           installments?: number | null
+          investment_wallet_id?: string | null
           is_recurring?: boolean
           parent_id?: string | null
           type: string
@@ -124,6 +159,7 @@ export type Database = {
           description?: string
           id?: string
           installments?: number | null
+          investment_wallet_id?: string | null
           is_recurring?: boolean
           parent_id?: string | null
           type?: string
@@ -135,6 +171,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_investment_wallet_id_fkey"
+            columns: ["investment_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "investment_wallets"
             referencedColumns: ["id"]
           },
         ]
